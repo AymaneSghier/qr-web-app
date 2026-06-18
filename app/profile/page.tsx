@@ -1,10 +1,10 @@
 "use client";
 
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 
-export default function ProfilePage() {
+function ProfileContent() {
   const searchParams = useSearchParams();
 
   const email = searchParams.get("email") || "";
@@ -82,5 +82,13 @@ export default function ProfilePage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <ProfileContent />
+    </Suspense>
   );
 }
