@@ -17,11 +17,30 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!currentUserId) return;
+  if (!currentUserId) return;
 
-    loadProfile();
-    loadMessages();
-  }, [currentUserId, receiverId]);
+  loadProfile();
+  loadMessages();
+
+  const channel = supabase
+    .channel("messages-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+      },
+      () => {
+        loadMessages();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [currentUserId, receiverId]);
 
   async function loadProfile() {
     const { data, error } = await supabase
