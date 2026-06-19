@@ -5,10 +5,15 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { ensureAnonSession } from "@/lib/auth";
 import { DEV_DEFAULT_VENUE_SLUG } from "@/lib/config";
-import { GENDERS, GENDER_LABELS, type Gender } from "@/lib/profile";
+import { GENDERS, type Gender } from "@/lib/profile";
+import { browserLocale, t } from "@/lib/strings";
 
 export default function ProfilePage() {
   const router = useRouter();
+  // Pre-venue page: no venue yet, so fall back to the browser language.
+  const locale = browserLocale();
+  const s = t[locale].profile;
+  const genderLabels = t[locale].genders;
 
   const [userId, setUserId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -37,7 +42,7 @@ export default function ProfilePage() {
         if (active && data) router.replace(`/v/${DEV_DEFAULT_VENUE_SLUG}`);
       } catch (e) {
         console.error(e);
-        if (active) setMessage("Couldn't start your session. Try again.");
+        if (active) setMessage(t[browserLocale()].profile.sessionError);
       }
     })();
     return () => {
@@ -60,11 +65,10 @@ export default function ProfilePage() {
 
   async function handleSaveProfile() {
     if (!userId) return;
-    if (!firstName.trim()) return setMessage("Please enter your first name.");
-    if (!photo) return setMessage("Please add a profile picture.");
-    if (!gender) return setMessage("Please select your gender.");
-    if (interestedIn.length === 0)
-      return setMessage("Please select who you'd like to meet.");
+    if (!firstName.trim()) return setMessage(s.needFirstName);
+    if (!photo) return setMessage(s.needPhoto);
+    if (!gender) return setMessage(s.needGender);
+    if (interestedIn.length === 0) return setMessage(s.needInterest);
 
     setSaving(true);
     setMessage("");
@@ -77,7 +81,7 @@ export default function ProfilePage() {
     if (uploadError) {
       console.error(uploadError);
       setSaving(false);
-      return setMessage("Photo upload failed.");
+      return setMessage(s.photoUploadFailed);
     }
 
     const {
@@ -95,7 +99,7 @@ export default function ProfilePage() {
     if (error) {
       console.error(error);
       setSaving(false);
-      return setMessage("Something went wrong. Try again.");
+      return setMessage(s.genericError);
     }
 
     router.replace(`/v/${DEV_DEFAULT_VENUE_SLUG}`);
@@ -107,10 +111,8 @@ export default function ProfilePage() {
         <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
           BarTap
         </p>
-        <h1 className="mt-3 text-4xl font-black">Set up your profile</h1>
-        <p className="mt-3 text-zinc-400">
-          {"A real first name and photo, that's it."}
-        </p>
+        <h1 className="mt-3 text-4xl font-black">{s.title}</h1>
+        <p className="mt-3 text-zinc-400">{s.subtitle}</p>
 
         <div className="mt-8 flex justify-center">
           <label className="cursor-pointer">
@@ -123,7 +125,7 @@ export default function ProfilePage() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                "Add Photo"
+                s.addPhoto
               )}
             </div>
             <input
@@ -137,20 +139,20 @@ export default function ProfilePage() {
 
         <input
           className="mt-8 w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
-          placeholder="First name"
+          placeholder={s.firstName}
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
         />
 
         <textarea
           className="mt-4 h-28 w-full resize-none rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
-          placeholder="Bio (optional)"
+          placeholder={s.bioOptional}
           value={bio}
           onChange={(e) => setBio(e.target.value)}
         />
 
         <div className="mt-6">
-          <p className="text-sm text-zinc-400">I am</p>
+          <p className="text-sm text-zinc-400">{s.iAm}</p>
           <div className="mt-2 flex gap-2">
             {GENDERS.map((g) => (
               <button
@@ -163,14 +165,14 @@ export default function ProfilePage() {
                     : "border-white/10 bg-black/40 text-zinc-300 hover:border-yellow-400"
                 }`}
               >
-                {GENDER_LABELS[g]}
+                {genderLabels[g]}
               </button>
             ))}
           </div>
         </div>
 
         <div className="mt-6">
-          <p className="text-sm text-zinc-400">{"I'd like to meet"}</p>
+          <p className="text-sm text-zinc-400">{s.iWantToMeet}</p>
           <div className="mt-2 flex gap-2">
             {GENDERS.map((g) => (
               <button
@@ -183,7 +185,7 @@ export default function ProfilePage() {
                     : "border-white/10 bg-black/40 text-zinc-300 hover:border-yellow-400"
                 }`}
               >
-                {GENDER_LABELS[g]}
+                {genderLabels[g]}
               </button>
             ))}
           </div>
@@ -194,7 +196,7 @@ export default function ProfilePage() {
           disabled={saving}
           className="mt-8 w-full rounded-2xl bg-yellow-400 px-5 py-4 font-bold text-black transition hover:bg-yellow-300 disabled:opacity-50"
         >
-          {saving ? "Saving…" : "Save profile"}
+          {saving ? s.saving : s.save}
         </button>
 
         {message && (

@@ -4,11 +4,7 @@
 export const GENDERS = ["woman", "man", "nonbinary"] as const;
 export type Gender = (typeof GENDERS)[number];
 
-export const GENDER_LABELS: Record<Gender, string> = {
-  woman: "Woman",
-  man: "Man",
-  nonbinary: "Non-binary",
-};
+// Display labels are localized in lib/strings.ts (t[locale].genders).
 
 // Mutual compatibility: each side must want the other's gender. This is the
 // filter that decides who shows up in the room.
