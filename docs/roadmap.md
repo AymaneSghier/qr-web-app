@@ -4,7 +4,9 @@ Living status doc. Update it as work ships. The authoritative record of what is 
 
 ## Current state (2026-06-19)
 
-Aymane shipped a first scaffold. The Supabase wiring works (DB, Storage, Realtime), but the scaffold is a generic *signup, then global directory, then open DM* flow. It does **not** yet implement the core mechanic and violates invariants 3 (discreet double opt-in) and 1 (live). It is the technical base to build the real product on, not Phase 1 already started.
+Bloc 0 (foundations) is shipped and Bloc 2 (discreet like/match) is built and pending a first live test. Aymane's original scaffold (generic *signup → global directory → open DM*, violating invariants 3 and 1) has been replaced: the data model, RLS, auth-backed identity and the core like/match mechanic now exist. The remaining blocker for a live test is a project config toggle (anonymous sign-in), see below.
+
+**Open blocker:** Supabase **anonymous sign-in must be enabled** in the dashboard (Authentication → Sign In / Providers → Anonymous). Until then every `to authenticated` policy denies access and nothing runs end to end. This is a dashboard toggle (no MCP/SQL path).
 
 **Exists today:**
 - `app/page.tsx`: onboarding (email + phone), looks up an existing profile, routes to `/dashboard` or `/profile`.
@@ -24,7 +26,7 @@ Aymane shipped a first scaffold. The Supabase wiring works (DB, Storage, Realtim
 
 Goal: prove people actually like and match when in the same room, at one recurring venue per city (Paris and New York), web-first. Build order: Bloc 0, then 2, then 1, then 3, then 4.
 
-- **Bloc 0, Foundations** (in progress): real data model (venues, presence, likes, matches, reworked messages), RLS + auth, local env running.
+- **Bloc 0, Foundations** (done): real data model (venues, presence, likes, matches, reworked messages), RLS + auth, local env running. Migrations in `supabase/migrations/`, dev seed (`paris-test`, `nyc-test` venues) in `supabase/seed.sql`, generated types in `lib/database.types.ts`.
   - **Auth:** Supabase anonymous sign-in — scanning the QR auto-creates a real `auth.users` session (UUID + JWT), zero friction, no signup wall. This gives `auth.uid()` so RLS is enforceable from day one. Optional later upgrade (add email/phone to the same anon user) keeps the UUID and makes the profile cross-device recoverable.
   - **Identity model:** persistent profile, ephemeral everything else. The profile persists (first name + photo required, bio optional). Presence and the match/chat are ephemeral and die with the night — the ephemeral match is the forcing function to talk IRL. We never let users "retrieve" past matches.
   - **Privacy:** other users only ever see first name + photo + bio. Email (optional, collected after onboarding to notify about the next live night) is PII — never exposed via RLS, never `select("*")`. Settle Supabase region (EU vs US) and the RGPD stance with Aymane before any public test.
@@ -34,7 +36,7 @@ Goal: prove people actually like and match when in the same room, at one recurri
     - *Tighten `profiles` SELECT in Bloc 1:* it is currently readable by any authenticated session so Bloc 2 (like/match) can be built before presence exists. Once presence lands, restrict SELECT to co-present users at the same venue (live invariant). PII stays locked in `profile_private` regardless.
     - *Add expiry/cleanup in Bloc 1/3:* `matches` and `presence` have no TTL yet. `matches` is unique per `(profile_a, profile_b, venue)` so it persists across nights at the same venue. The "match dies with the night" behaviour needs a cleanup job (cron) on stale `left_at`/`last_seen_at` and on old matches.
 - **Bloc 1, QR check-in and live presence**: `/v/[venueSlug]` route, dashboard scoped to who is checked in here now, presence that fades on leave/timeout.
-- **Bloc 2, Discreet like and match** (the core hypothesis): secret like (zero notification), reciprocal detection creates a match.
+- **Bloc 2, Discreet like and match** (built, pending live test): secret like (zero notification), reciprocal detection creates a match. Anonymous-auth bootstrap (`lib/auth.ts`), profile onboarding rewritten on the new schema, and the room at `/v/[venueSlug]` (compatible-profiles grid, discreet like, realtime match reveal). Chat is deliberately deferred to Bloc 3 — a match currently reveals "go say hi" with no messaging. Built before Bloc 1, so it uses a seeded stand-in venue (`DEV_DEFAULT_VENUE_SLUG` in `lib/config.ts`) instead of real QR check-in.
 - **Bloc 3, Chat gated by match**: chat opens only between matched profiles, remove open DM, ephemeral in v1.
 - **Bloc 4, Safety / women first**: one-tap report and block, 18+ gate, go invisible.
 - **Bloc 5, First scrappy test**: deploy (Vercel), generate a venue QR, test on a real night even among friends.
