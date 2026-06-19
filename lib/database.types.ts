@@ -63,6 +63,7 @@ export type Database = {
       matches: {
         Row: {
           created_at: string
+          expires_at: string
           id: string
           profile_a: string
           profile_b: string
@@ -70,6 +71,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          expires_at: string
           id?: string
           profile_a: string
           profile_b: string
@@ -77,6 +79,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          expires_at?: string
           id?: string
           profile_a?: string
           profile_b?: string

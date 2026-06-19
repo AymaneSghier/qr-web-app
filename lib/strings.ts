@@ -73,6 +73,20 @@ type Dict = {
     leftTitle: string;
     leftBody: string;
     rejoin: string;
+    chat: string;
+    openChat: string;
+    activeMatches: string;
+  };
+  chat: {
+    loading: string;
+    unavailable: string;
+    backToRoom: string;
+    expiresTonight: string;
+    empty: string;
+    placeholder: string;
+    send: string;
+    sendError: string;
+    closed: string;
   };
 };
 
@@ -122,6 +136,20 @@ export const t: Record<Locale, Dict> = {
       leftTitle: "You've left the room",
       leftBody: "You're no longer visible here. Come back whenever you like.",
       rejoin: "Re-join the room",
+      chat: "Chat",
+      openChat: "Open chat",
+      activeMatches: "Tonight's matches",
+    },
+    chat: {
+      loading: "Opening chat…",
+      unavailable: "This chat is not available.",
+      backToRoom: "Back to the room",
+      expiresTonight: "Open until the night ends.",
+      empty: "No messages yet. Keep it light and go say hi.",
+      placeholder: "Write a short message…",
+      send: "Send",
+      sendError: "Couldn't send your message. Try again.",
+      closed: "This match has expired for the night.",
     },
   },
   fr: {
@@ -170,6 +198,20 @@ export const t: Record<Locale, Dict> = {
       leftTitle: "Tu as quitté la salle",
       leftBody: "Tu n'es plus visible ici. Reviens quand tu veux.",
       rejoin: "Revenir dans la salle",
+      chat: "Chat",
+      openChat: "Ouvrir le chat",
+      activeMatches: "Matches de ce soir",
+    },
+    chat: {
+      loading: "Ouverture du chat…",
+      unavailable: "Ce chat n'est pas disponible.",
+      backToRoom: "Retour à la salle",
+      expiresTonight: "Ouvert jusqu'à la fin de la soirée.",
+      empty: "Aucun message pour l'instant. Reste simple et va lui dire bonjour.",
+      placeholder: "Écris un message court…",
+      send: "Envoyer",
+      sendError: "Impossible d'envoyer ton message. Réessaie.",
+      closed: "Ce match a expiré pour la soirée.",
     },
   },
 };

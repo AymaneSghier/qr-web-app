@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { ensureAnonSession } from "@/lib/auth";
@@ -21,6 +22,16 @@ type Venue = Pick<
   "id" | "name" | "city"
 >;
 
+type MatchRow = Pick<
+  Database["public"]["Tables"]["matches"]["Row"],
+  "id" | "profile_a" | "profile_b" | "expires_at"
+>;
+
+type ActiveMatch = {
+  id: string;
+  other: PublicProfile;
+};
+
 // How often we bump our presence heartbeat. Presence does not expire on this
 // timer (the room lasts the night, closed by the rollover cron) — the heartbeat
 // just keeps last_seen_at fresh while the tab is open.
@@ -38,7 +49,8 @@ export default function VenueRoom() {
   const [candidates, setCandidates] = useState<PublicProfile[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [matchedIds, setMatchedIds] = useState<Set<string>>(new Set());
-  const [newMatch, setNewMatch] = useState<PublicProfile | null>(null);
+  const [matches, setMatches] = useState<ActiveMatch[]>([]);
+  const [newMatch, setNewMatch] = useState<ActiveMatch | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -81,14 +93,17 @@ export default function VenueRoom() {
     []
   );
 
-  const registerMatch = useCallback((other: PublicProfile, reveal: boolean) => {
+  const registerMatch = useCallback((match: ActiveMatch, reveal: boolean) => {
     setMatchedIds((prev) => {
-      if (prev.has(other.id)) return prev;
+      if (prev.has(match.other.id)) return prev;
       const next = new Set(prev);
-      next.add(other.id);
+      next.add(match.other.id);
       return next;
     });
-    if (reveal) setNewMatch((current) => current ?? other);
+    setMatches((prev) =>
+      prev.some((existing) => existing.id === match.id) ? prev : [...prev, match]
+    );
+    if (reveal) setNewMatch((current) => current ?? match);
   }, []);
 
   // Bootstrap: session, profile, venue, check-in, then the live room state.
@@ -134,20 +149,26 @@ export default function VenueRoom() {
             supabase.from("likes").select("liked_id").eq("venue_id", venueRow.id),
             supabase
               .from("matches")
-              .select("profile_a, profile_b")
-              .eq("venue_id", venueRow.id),
+              .select("id, profile_a, profile_b, expires_at")
+              .eq("venue_id", venueRow.id)
+              .gt("expires_at", new Date().toISOString()),
           ]);
         if (!active) return;
 
+        const activeMatches = (
+          await Promise.all(
+            ((myMatches ?? []) as MatchRow[]).map(async (m) => {
+              const otherId = m.profile_a === user.id ? m.profile_b : m.profile_a;
+              const other = await loadProfileById(otherId);
+              return other ? { id: m.id, other } : null;
+            })
+          )
+        ).filter((m): m is ActiveMatch => m !== null);
+
         setCandidates(candidatesData);
         setLikedIds(new Set((myLikes ?? []).map((l) => l.liked_id)));
-        setMatchedIds(
-          new Set(
-            (myMatches ?? []).map((m) =>
-              m.profile_a === user.id ? m.profile_b : m.profile_a
-            )
-          )
-        );
+        setMatches(activeMatches);
+        setMatchedIds(new Set(activeMatches.map((m) => m.other.id)));
         setStatus("ready");
       } catch (e) {
         console.error(e);
@@ -216,12 +237,13 @@ export default function VenueRoom() {
           filter: `venue_id=eq.${venue.id}`,
         },
         async (payload) => {
-          const m = payload.new as { profile_a: string; profile_b: string };
+          const m = payload.new as MatchRow;
           const myId = meRef.current?.id;
           if (!myId || (m.profile_a !== myId && m.profile_b !== myId)) return;
+          if (Date.parse(m.expires_at) <= Date.now()) return;
           const otherId = m.profile_a === myId ? m.profile_b : m.profile_a;
           const other = await loadProfileById(otherId);
-          if (other) registerMatch(other, true);
+          if (other) registerMatch({ id: m.id, other }, true);
         }
       )
       .subscribe();
@@ -256,11 +278,12 @@ export default function VenueRoom() {
     // will deliver it, but check directly too so the reveal feels instant.
     const { data: match } = await supabase
       .from("matches")
-      .select("profile_a, profile_b")
+      .select("id, profile_a, profile_b, expires_at")
       .eq("venue_id", venue.id)
       .or(`profile_a.eq.${candidate.id},profile_b.eq.${candidate.id}`)
+      .gt("expires_at", new Date().toISOString())
       .maybeSingle();
-    if (match) registerMatch(candidate, true);
+    if (match) registerMatch({ id: match.id, other: candidate }, true);
   }
 
   // Explicit control over your own presence (women-first): leave the room and
@@ -343,6 +366,38 @@ export default function VenueRoom() {
         </div>
         <p className="mt-2 text-zinc-400">{s.pitch}</p>
 
+        {matches.length > 0 && (
+          <section className="mt-8">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
+              {s.activeMatches}
+            </h2>
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
+              {matches.map((match) => (
+                <Link
+                  key={match.id}
+                  href={`/chat/${match.id}`}
+                  className="flex min-w-48 items-center gap-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3 transition hover:border-yellow-300/70"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={match.other.photo_url}
+                    alt={match.other.first_name}
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+                  <span>
+                    <span className="block font-bold text-white">
+                      {match.other.first_name}
+                    </span>
+                    <span className="block text-sm text-yellow-200">
+                      {s.chat}
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {visible.length === 0 ? (
           <p className="mt-12 text-zinc-500">{s.empty}</p>
         ) : (
@@ -390,18 +445,28 @@ export default function VenueRoom() {
             </p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={newMatch.photo_url}
-              alt={newMatch.first_name}
+              src={newMatch.other.photo_url}
+              alt={newMatch.other.first_name}
               className="mx-auto mt-6 h-32 w-32 rounded-full object-cover"
             />
-            <h2 className="mt-4 text-3xl font-black">{newMatch.first_name}</h2>
+            <h2 className="mt-4 text-3xl font-black">
+              {newMatch.other.first_name}
+            </h2>
             <p className="mt-3 text-zinc-300">{s.matchBody}</p>
-            <button
-              onClick={() => setNewMatch(null)}
-              className="mt-8 w-full rounded-2xl bg-yellow-400 px-5 py-4 font-bold text-black transition hover:bg-yellow-300"
-            >
-              {s.matchDismiss}
-            </button>
+            <div className="mt-8 grid gap-3">
+              <Link
+                href={`/chat/${newMatch.id}`}
+                className="w-full rounded-2xl bg-yellow-400 px-5 py-4 font-bold text-black transition hover:bg-yellow-300"
+              >
+                {s.openChat}
+              </Link>
+              <button
+                onClick={() => setNewMatch(null)}
+                className="w-full rounded-2xl border border-white/10 px-5 py-4 font-bold text-white transition hover:border-white/30"
+              >
+                {s.matchDismiss}
+              </button>
+            </div>
           </div>
         </div>
       )}
