@@ -14,6 +14,52 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+          venue_id: string | null
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+          venue_id?: string | null
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocks_blocked_id_fkey"
+            columns: ["blocked_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocks_blocker_id_fkey"
+            columns: ["blocker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocks_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       likes: {
         Row: {
           created_at: string
@@ -152,6 +198,7 @@ export type Database = {
         Row: {
           checked_in_at: string
           id: string
+          is_visible: boolean
           last_seen_at: string
           left_at: string | null
           profile_id: string
@@ -160,6 +207,7 @@ export type Database = {
         Insert: {
           checked_in_at?: string
           id?: string
+          is_visible?: boolean
           last_seen_at?: string
           left_at?: string | null
           profile_id: string
@@ -168,6 +216,7 @@ export type Database = {
         Update: {
           checked_in_at?: string
           id?: string
+          is_visible?: boolean
           last_seen_at?: string
           left_at?: string | null
           profile_id?: string
@@ -192,6 +241,7 @@ export type Database = {
       }
       profile_private: {
         Row: {
+          adult_confirmed_at: string | null
           created_at: string
           email: string | null
           id: string
@@ -199,6 +249,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          adult_confirmed_at?: string | null
           created_at?: string
           email?: string | null
           id: string
@@ -206,6 +257,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          adult_confirmed_at?: string | null
           created_at?: string
           email?: string | null
           id?: string
@@ -255,6 +307,58 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          reason: string
+          reported_id: string
+          reporter_id: string
+          venue_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reason: string
+          reported_id: string
+          reporter_id: string
+          venue_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reason?: string
+          reported_id?: string
+          reporter_id?: string
+          venue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reported_id_fkey"
+            columns: ["reported_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venues: {
         Row: {
           city: string | null
@@ -292,6 +396,7 @@ export type Database = {
         Returns: {
           checked_in_at: string
           id: string
+          is_visible: boolean
           last_seen_at: string
           left_at: string | null
           profile_id: string

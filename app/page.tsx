@@ -22,7 +22,6 @@ export default function Home() {
       try {
         const user = await ensureAnonSession();
 
-        // Do we already have a profile for this anonymous user?
         const { data, error: profileError } = await supabase
           .from("profiles")
           .select("id")
@@ -31,7 +30,24 @@ export default function Home() {
         if (profileError) throw profileError;
         if (!active) return;
 
-        router.replace(data ? `/v/${DEV_DEFAULT_VENUE_SLUG}` : "/profile");
+        if (!data) {
+          router.replace("/profile");
+          return;
+        }
+
+        const { data: privateProfile, error: privateError } = await supabase
+          .from("profile_private")
+          .select("adult_confirmed_at")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (privateError) throw privateError;
+        if (!active) return;
+
+        router.replace(
+          privateProfile?.adult_confirmed_at
+            ? `/v/${DEV_DEFAULT_VENUE_SLUG}`
+            : "/profile"
+        );
       } catch (e) {
         console.error(e);
         if (active) {

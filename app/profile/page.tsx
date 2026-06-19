@@ -24,6 +24,8 @@ export default function ProfilePage() {
   const [interestedIn, setInterestedIn] = useState<Gender[]>([]);
   const [photo, setPhoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [adultConfirmed, setAdultConfirmed] = useState(false);
+  const [existingProfile, setExistingProfile] = useState(false);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -41,7 +43,20 @@ export default function ProfilePage() {
           .select("id")
           .eq("id", user.id)
           .maybeSingle();
-        if (active && data) router.replace(`/v/${DEV_DEFAULT_VENUE_SLUG}`);
+        if (!active) return;
+        if (data) {
+          const { data: privateProfile } = await supabase
+            .from("profile_private")
+            .select("adult_confirmed_at")
+            .eq("id", user.id)
+            .maybeSingle();
+          if (!active) return;
+          if (privateProfile?.adult_confirmed_at) {
+            router.replace(`/v/${DEV_DEFAULT_VENUE_SLUG}`);
+            return;
+          }
+          setExistingProfile(true);
+        }
       } catch (e) {
         console.error(e);
         if (active) setMessage(t[browserLocale()].profile.sessionError);
@@ -67,6 +82,27 @@ export default function ProfilePage() {
 
   async function handleSaveProfile() {
     if (!userId) return;
+    if (!adultConfirmed) return setMessage(s.needAdult);
+
+    if (existingProfile) {
+      setSaving(true);
+      setMessage("");
+      const { error } = await supabase.from("profile_private").upsert(
+        {
+          id: userId,
+          adult_confirmed_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+      if (error) {
+        console.error(error);
+        setSaving(false);
+        return setMessage(s.genericError);
+      }
+      router.replace(`/v/${DEV_DEFAULT_VENUE_SLUG}`);
+      return;
+    }
+
     if (!firstName.trim()) return setMessage(s.needFirstName);
     if (!photo) return setMessage(s.needPhoto);
     if (!gender) return setMessage(s.needGender);
@@ -104,6 +140,21 @@ export default function ProfilePage() {
       return setMessage(s.genericError);
     }
 
+    const { error: privateError } = await supabase
+      .from("profile_private")
+      .upsert(
+        {
+          id: userId,
+          adult_confirmed_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      );
+    if (privateError) {
+      console.error(privateError);
+      setSaving(false);
+      return setMessage(s.genericError);
+    }
+
     router.replace(`/v/${DEV_DEFAULT_VENUE_SLUG}`);
   }
 
@@ -113,85 +164,103 @@ export default function ProfilePage() {
         <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
           BarTap
         </p>
-        <h1 className="mt-3 text-4xl font-black">{s.title}</h1>
-        <p className="mt-3 text-zinc-400">{s.subtitle}</p>
+        <h1 className="mt-3 text-4xl font-black">
+          {existingProfile ? s.ageTitle : s.title}
+        </h1>
+        <p className="mt-3 text-zinc-400">
+          {existingProfile ? s.ageSubtitle : s.subtitle}
+        </p>
 
-        <div className="mt-8 flex justify-center">
-          <label className="cursor-pointer">
-            <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-zinc-500 bg-black/30 text-center text-sm text-zinc-400">
-              {previewUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="h-full w-full object-cover"
+        {!existingProfile && (
+          <>
+            <div className="mt-8 flex justify-center">
+              <label className="cursor-pointer">
+                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-zinc-500 bg-black/30 text-center text-sm text-zinc-400">
+                  {previewUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    s.addPhoto
+                  )}
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoChange}
                 />
-              ) : (
-                s.addPhoto
-              )}
+              </label>
             </div>
+
             <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoChange}
+              className="mt-8 w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
+              placeholder={s.firstName}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
             />
-          </label>
-        </div>
 
-        <input
-          className="mt-8 w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
-          placeholder={s.firstName}
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
+            <textarea
+              className="mt-4 h-28 w-full resize-none rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
+              placeholder={s.bioOptional}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+            />
 
-        <textarea
-          className="mt-4 h-28 w-full resize-none rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
-          placeholder={s.bioOptional}
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-        />
+            <div className="mt-6">
+              <p className="text-sm text-zinc-400">{s.iAm}</p>
+              <div className="mt-2 flex gap-2">
+                {GENDERS.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGender(g)}
+                    className={`flex-1 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${
+                      gender === g
+                        ? "border-yellow-400 bg-yellow-400 text-black"
+                        : "border-white/10 bg-black/40 text-zinc-300 hover:border-yellow-400"
+                    }`}
+                  >
+                    {genderLabels[g]}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        <div className="mt-6">
-          <p className="text-sm text-zinc-400">{s.iAm}</p>
-          <div className="mt-2 flex gap-2">
-            {GENDERS.map((g) => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => setGender(g)}
-                className={`flex-1 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${
-                  gender === g
-                    ? "border-yellow-400 bg-yellow-400 text-black"
-                    : "border-white/10 bg-black/40 text-zinc-300 hover:border-yellow-400"
-                }`}
-              >
-                {genderLabels[g]}
-              </button>
-            ))}
-          </div>
-        </div>
+            <div className="mt-6">
+              <p className="text-sm text-zinc-400">{s.iWantToMeet}</p>
+              <div className="mt-2 flex gap-2">
+                {GENDERS.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => toggleInterest(g)}
+                    className={`flex-1 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${
+                      interestedIn.includes(g)
+                        ? "border-yellow-400 bg-yellow-400 text-black"
+                        : "border-white/10 bg-black/40 text-zinc-300 hover:border-yellow-400"
+                    }`}
+                  >
+                    {genderLabels[g]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
-        <div className="mt-6">
-          <p className="text-sm text-zinc-400">{s.iWantToMeet}</p>
-          <div className="mt-2 flex gap-2">
-            {GENDERS.map((g) => (
-              <button
-                key={g}
-                type="button"
-                onClick={() => toggleInterest(g)}
-                className={`flex-1 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${
-                  interestedIn.includes(g)
-                    ? "border-yellow-400 bg-yellow-400 text-black"
-                    : "border-white/10 bg-black/40 text-zinc-300 hover:border-yellow-400"
-                }`}
-              >
-                {genderLabels[g]}
-              </button>
-            ))}
-          </div>
-        </div>
+        <label className="mt-6 flex items-start gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">
+          <input
+            type="checkbox"
+            checked={adultConfirmed}
+            onChange={(e) => setAdultConfirmed(e.target.checked)}
+            className="mt-1 h-4 w-4 accent-yellow-400"
+          />
+          <span>{s.adultConfirm}</span>
+        </label>
 
         <button
           onClick={handleSaveProfile}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -32,12 +32,21 @@ type ActiveMatch = {
   other: PublicProfile;
 };
 
+const REPORT_REASONS = [
+  "harassment",
+  "fake_profile",
+  "underage",
+  "unsafe_behavior",
+  "other",
+] as const;
+type ReportReason = (typeof REPORT_REASONS)[number];
+
 // How often we bump our presence heartbeat. Presence does not expire on this
 // timer (the room lasts the night, closed by the rollover cron) — the heartbeat
 // just keeps last_seen_at fresh while the tab is open.
 const HEARTBEAT_MS = 120_000;
 
-type Status = "loading" | "ready" | "error" | "left";
+type Status = "loading" | "ready" | "error" | "left" | "invisible";
 
 export default function VenueRoom() {
   const router = useRouter();
@@ -51,6 +60,10 @@ export default function VenueRoom() {
   const [matchedIds, setMatchedIds] = useState<Set<string>>(new Set());
   const [matches, setMatches] = useState<ActiveMatch[]>([]);
   const [newMatch, setNewMatch] = useState<ActiveMatch | null>(null);
+  const [reportTarget, setReportTarget] = useState<PublicProfile | null>(null);
+  const [reportReason, setReportReason] = useState<ReportReason>("harassment");
+  const [reportNote, setReportNote] = useState("");
+  const [reportSubmitted, setReportSubmitted] = useState(false);
   const [status, setStatus] = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -119,6 +132,19 @@ export default function VenueRoom() {
           router.replace("/profile");
           return;
         }
+
+        const { data: privateProfile, error: privateError } = await supabase
+          .from("profile_private")
+          .select("adult_confirmed_at")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (privateError) throw privateError;
+        if (!active) return;
+        if (!privateProfile?.adult_confirmed_at) {
+          router.replace("/profile");
+          return;
+        }
+
         setMe(myProfile);
 
         const { data: venueRow, error: venueError } = await supabase
@@ -137,15 +163,18 @@ export default function VenueRoom() {
 
         // Scanning the QR = checking in. This must land before we read other
         // profiles: the tightened RLS only lets you see who shares your room.
-        const { error: checkInError } = await supabase.rpc("check_in", {
+        const { data: presenceRow, error: checkInError } = await supabase.rpc("check_in", {
           p_venue_id: venueRow.id,
         });
         if (checkInError) throw checkInError;
         if (!active) return;
+        const isVisible = presenceRow?.is_visible ?? true;
 
         const [candidatesData, { data: myLikes }, { data: myMatches }] =
           await Promise.all([
-            loadCandidates(venueRow.id, user.id, myProfile),
+            isVisible
+              ? loadCandidates(venueRow.id, user.id, myProfile)
+              : Promise.resolve([]),
             supabase.from("likes").select("liked_id").eq("venue_id", venueRow.id),
             supabase
               .from("matches")
@@ -169,7 +198,7 @@ export default function VenueRoom() {
         setLikedIds(new Set((myLikes ?? []).map((l) => l.liked_id)));
         setMatches(activeMatches);
         setMatchedIds(new Set(activeMatches.map((m) => m.other.id)));
-        setStatus("ready");
+        setStatus(isVisible ? "ready" : "invisible");
       } catch (e) {
         console.error(e);
         if (active) {
@@ -186,7 +215,7 @@ export default function VenueRoom() {
   // Heartbeat: keep our presence fresh while the room is open and the tab is
   // visible. check_in is idempotent — it just bumps last_seen_at.
   useEffect(() => {
-    if (!venue || status !== "ready") return;
+    if (!venue || (status !== "ready" && status !== "invisible")) return;
     const beat = () => supabase.rpc("check_in", { p_venue_id: venue.id });
     const id = setInterval(beat, HEARTBEAT_MS);
     const onVisible = () => {
@@ -286,6 +315,106 @@ export default function VenueRoom() {
     if (match) registerMatch({ id: match.id, other: candidate }, true);
   }
 
+  async function blockProfile(profile: PublicProfile) {
+    if (!me) return;
+    const { error } = await supabase.from("blocks").insert({
+      blocker_id: me.id,
+      blocked_id: profile.id,
+      venue_id: venue?.id ?? null,
+    });
+    if (error && error.code !== "23505") {
+      console.error(error);
+      setErrorMsg(s.blockError);
+      return;
+    }
+
+    setCandidates((prev) => prev.filter((candidate) => candidate.id !== profile.id));
+    setLikedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(profile.id);
+      return next;
+    });
+    setMatchedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(profile.id);
+      return next;
+    });
+    setMatches((prev) => prev.filter((match) => match.other.id !== profile.id));
+    setNewMatch((current) => (current?.other.id === profile.id ? null : current));
+    if (reportTarget?.id === profile.id) setReportTarget(null);
+    setReportSubmitted(false);
+    setErrorMsg("");
+  }
+
+  async function confirmBlock(profile: PublicProfile) {
+    if (!window.confirm(s.blockConfirm(profile.first_name))) return;
+    await blockProfile(profile);
+  }
+
+  function openReport(profile: PublicProfile) {
+    setReportTarget(profile);
+    setReportReason("harassment");
+    setReportNote("");
+    setReportSubmitted(false);
+    setErrorMsg("");
+  }
+
+  async function submitReport(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!me || !reportTarget) return;
+
+    const { error } = await supabase.from("reports").insert({
+      reporter_id: me.id,
+      reported_id: reportTarget.id,
+      venue_id: venue?.id ?? null,
+      reason: reportReason,
+      note: reportNote.trim() || null,
+    });
+    if (error) {
+      console.error(error);
+      setErrorMsg(s.reportError);
+      return;
+    }
+
+    setReportSubmitted(true);
+    setErrorMsg("");
+  }
+
+  async function goInvisible() {
+    if (!me) return;
+    const { error } = await supabase
+      .from("presence")
+      .update({ is_visible: false })
+      .eq("profile_id", me.id)
+      .is("left_at", null);
+    if (error) {
+      console.error(error);
+      setErrorMsg(s.visibilityError);
+      return;
+    }
+    setCandidates([]);
+    setStatus("invisible");
+    setErrorMsg("");
+  }
+
+  async function becomeVisible() {
+    if (!me || !venue) return;
+    const { error } = await supabase
+      .from("presence")
+      .update({ is_visible: true })
+      .eq("profile_id", me.id)
+      .eq("venue_id", venue.id)
+      .is("left_at", null);
+    if (error) {
+      console.error(error);
+      setErrorMsg(s.visibilityError);
+      return;
+    }
+    setCandidates(await loadCandidates(venue.id, me.id, me));
+    setStatus("ready");
+    setErrorMsg("");
+  }
+
   // Explicit control over your own presence (women-first): leave the room and
   // disappear from it immediately, without waiting for the nightly rollover.
   async function leave() {
@@ -343,6 +472,70 @@ export default function VenueRoom() {
     );
   }
 
+  if (status === "invisible") {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-black via-zinc-950 to-neutral-900 px-6 py-10 text-white">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
+            BarTap
+          </p>
+          <h1 className="mt-3 text-4xl font-black">{s.invisibleTitle}</h1>
+          <p className="mt-3 text-zinc-400">{s.invisibleBody}</p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <button
+              onClick={becomeVisible}
+              className="rounded-2xl bg-yellow-400 px-5 py-4 font-bold text-black transition hover:bg-yellow-300"
+            >
+              {s.becomeVisible}
+            </button>
+            <button
+              onClick={leave}
+              className="rounded-2xl border border-white/10 px-5 py-4 font-bold text-white transition hover:border-white/30"
+            >
+              {s.leave}
+            </button>
+          </div>
+          {matches.length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
+                {s.activeMatches}
+              </h2>
+              <div className="mt-4 grid gap-3">
+                {matches.map((match) => (
+                  <div
+                    key={match.id}
+                    className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3"
+                  >
+                    <Link
+                      href={`/chat/${match.id}`}
+                      className="flex items-center gap-3"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={match.other.photo_url}
+                        alt={match.other.first_name}
+                        className="h-12 w-12 rounded-full object-cover"
+                      />
+                      <span>
+                        <span className="block font-bold text-white">
+                          {match.other.first_name}
+                        </span>
+                        <span className="block text-sm text-yellow-200">
+                          {s.chat}
+                        </span>
+                      </span>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          {errorMsg && <p className="mt-6 text-sm text-red-400">{errorMsg}</p>}
+        </div>
+      </main>
+    );
+  }
+
   const visible = candidates.filter((c) => !matchedIds.has(c.id));
 
   return (
@@ -357,12 +550,20 @@ export default function VenueRoom() {
               {s.whosHere(venue?.name ?? "")}
             </h1>
           </div>
-          <button
-            onClick={leave}
-            className="shrink-0 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:border-white/30 hover:text-white"
-          >
-            {s.leave}
-          </button>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <button
+              onClick={goInvisible}
+              className="rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-semibold text-yellow-100 transition hover:border-yellow-300"
+            >
+              {s.goInvisible}
+            </button>
+            <button
+              onClick={leave}
+              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:border-white/30 hover:text-white"
+            >
+              {s.leave}
+            </button>
+          </div>
         </div>
         <p className="mt-2 text-zinc-400">{s.pitch}</p>
 
@@ -373,26 +574,44 @@ export default function VenueRoom() {
             </h2>
             <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
               {matches.map((match) => (
-                <Link
+                <div
                   key={match.id}
-                  href={`/chat/${match.id}`}
-                  className="flex min-w-48 items-center gap-3 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3 transition hover:border-yellow-300/70"
+                  className="min-w-56 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={match.other.photo_url}
-                    alt={match.other.first_name}
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
-                  <span>
-                    <span className="block font-bold text-white">
-                      {match.other.first_name}
+                  <Link
+                    href={`/chat/${match.id}`}
+                    className="flex items-center gap-3 transition hover:opacity-80"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={match.other.photo_url}
+                      alt={match.other.first_name}
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
+                    <span>
+                      <span className="block font-bold text-white">
+                        {match.other.first_name}
+                      </span>
+                      <span className="block text-sm text-yellow-200">
+                        {s.chat}
+                      </span>
                     </span>
-                    <span className="block text-sm text-yellow-200">
-                      {s.chat}
-                    </span>
-                  </span>
-                </Link>
+                  </Link>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => openReport(match.other)}
+                      className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-white/30"
+                    >
+                      {s.report}
+                    </button>
+                    <button
+                      onClick={() => confirmBlock(match.other)}
+                      className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-semibold text-red-200 transition hover:border-red-300"
+                    >
+                      {s.block}
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           </section>
@@ -430,6 +649,20 @@ export default function VenueRoom() {
                   >
                     {liked ? s.liked : s.like}
                   </button>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => openReport(c)}
+                      className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-white/30"
+                    >
+                      {s.report}
+                    </button>
+                    <button
+                      onClick={() => confirmBlock(c)}
+                      className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-semibold text-red-200 transition hover:border-red-300"
+                    >
+                      {s.block}
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -468,6 +701,87 @@ export default function VenueRoom() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {reportTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur">
+          <form
+            onSubmit={submitReport}
+            className="w-full max-w-sm rounded-3xl border border-white/10 bg-zinc-950 p-6 shadow-2xl"
+          >
+            <h2 className="text-2xl font-black">
+              {s.reportTitle(reportTarget.first_name)}
+            </h2>
+            {reportSubmitted ? (
+              <>
+                <p className="mt-4 text-zinc-300">{s.reportSuccess}</p>
+                <p className="mt-2 text-sm text-zinc-500">
+                  {s.reportBlockPrompt}
+                </p>
+                <div className="mt-6 grid gap-3">
+                  <button
+                    type="button"
+                    onClick={() => blockProfile(reportTarget)}
+                    className="rounded-2xl bg-red-500 px-5 py-3 font-bold text-white transition hover:bg-red-400"
+                  >
+                    {s.block}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReportTarget(null)}
+                    className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-white transition hover:border-white/30"
+                  >
+                    {s.reportCancel}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <label className="mt-5 block text-sm font-semibold text-zinc-300">
+                  {s.reportReason}
+                  <select
+                    value={reportReason}
+                    onChange={(event) =>
+                      setReportReason(event.target.value as ReportReason)
+                    }
+                    className="mt-2 w-full rounded-2xl border border-white/10 bg-black px-4 py-3 text-white outline-none focus:border-yellow-400"
+                  >
+                    {REPORT_REASONS.map((reason) => (
+                      <option key={reason} value={reason}>
+                        {s.reportReasons[reason]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <textarea
+                  value={reportNote}
+                  onChange={(event) => setReportNote(event.target.value)}
+                  maxLength={500}
+                  placeholder={s.reportNote}
+                  className="mt-4 h-28 w-full resize-none rounded-2xl border border-white/10 bg-black px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
+                />
+                {errorMsg && (
+                  <p className="mt-3 text-sm text-red-400">{errorMsg}</p>
+                )}
+                <div className="mt-6 grid gap-3">
+                  <button
+                    type="submit"
+                    className="rounded-2xl bg-yellow-400 px-5 py-3 font-bold text-black transition hover:bg-yellow-300"
+                  >
+                    {s.reportSubmit}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReportTarget(null)}
+                    className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-white transition hover:border-white/30"
+                  >
+                    {s.reportCancel}
+                  </button>
+                </div>
+              </>
+            )}
+          </form>
         </div>
       )}
     </main>

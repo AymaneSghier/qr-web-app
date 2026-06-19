@@ -39,11 +39,14 @@ type Dict = {
   profile: {
     title: string;
     subtitle: string;
+    ageTitle: string;
+    ageSubtitle: string;
     addPhoto: string;
     firstName: string;
     bioOptional: string;
     iAm: string;
     iWantToMeet: string;
+    adultConfirm: string;
     save: string;
     saving: string;
     sessionError: string;
@@ -51,6 +54,7 @@ type Dict = {
     needPhoto: string;
     needGender: string;
     needInterest: string;
+    needAdult: string;
     photoUploadFailed: string;
     genericError: string;
   };
@@ -67,6 +71,11 @@ type Dict = {
     liked: string;
     likeError: string;
     leave: string;
+    goInvisible: string;
+    invisibleTitle: string;
+    invisibleBody: string;
+    becomeVisible: string;
+    visibilityError: string;
     matchKicker: string;
     matchBody: string;
     matchDismiss: string;
@@ -76,6 +85,25 @@ type Dict = {
     chat: string;
     openChat: string;
     activeMatches: string;
+    block: string;
+    blockConfirm: (name: string) => string;
+    blockError: string;
+    report: string;
+    reportTitle: (name: string) => string;
+    reportReason: string;
+    reportNote: string;
+    reportSubmit: string;
+    reportCancel: string;
+    reportSuccess: string;
+    reportError: string;
+    reportBlockPrompt: string;
+    reportReasons: {
+      harassment: string;
+      fake_profile: string;
+      underage: string;
+      unsafe_behavior: string;
+      other: string;
+    };
   };
   chat: {
     loading: string;
@@ -102,11 +130,14 @@ export const t: Record<Locale, Dict> = {
     profile: {
       title: "Set up your profile",
       subtitle: "A real first name and photo, that's it.",
+      ageTitle: "Confirm your age",
+      ageSubtitle: "BarTap is for adults only.",
       addPhoto: "Add Photo",
       firstName: "First name",
       bioOptional: "Bio (optional)",
       iAm: "I am",
       iWantToMeet: "I'd like to meet",
+      adultConfirm: "I confirm that I am 18 or older.",
       save: "Save profile",
       saving: "Saving…",
       sessionError: "Couldn't start your session. Try again.",
@@ -114,6 +145,7 @@ export const t: Record<Locale, Dict> = {
       needPhoto: "Please add a profile picture.",
       needGender: "Please select your gender.",
       needInterest: "Please select who you'd like to meet.",
+      needAdult: "Please confirm that you are 18 or older.",
       photoUploadFailed: "Photo upload failed.",
       genericError: "Something went wrong. Try again.",
     },
@@ -130,6 +162,12 @@ export const t: Record<Locale, Dict> = {
       liked: "Liked",
       likeError: "Couldn't register your like. Try again.",
       leave: "Leave for the night",
+      goInvisible: "Go invisible",
+      invisibleTitle: "You're invisible",
+      invisibleBody:
+        "You're not visible in this room, and browsing is paused until you come back.",
+      becomeVisible: "Become visible",
+      visibilityError: "Couldn't update your visibility. Try again.",
       matchKicker: "It's a match",
       matchBody: "You both tapped. Go say hi, they're here tonight.",
       matchDismiss: "Keep browsing",
@@ -139,6 +177,26 @@ export const t: Record<Locale, Dict> = {
       chat: "Chat",
       openChat: "Open chat",
       activeMatches: "Tonight's matches",
+      block: "Block",
+      blockConfirm: (name) =>
+        `Block ${name}? You will no longer see each other, and any match or chat will close.`,
+      blockError: "Couldn't block this person. Try again.",
+      report: "Report",
+      reportTitle: (name) => `Report ${name}`,
+      reportReason: "Reason",
+      reportNote: "Add a note (optional)",
+      reportSubmit: "Submit report",
+      reportCancel: "Cancel",
+      reportSuccess: "Report submitted.",
+      reportError: "Couldn't submit the report. Try again.",
+      reportBlockPrompt: "Do you also want to block this person?",
+      reportReasons: {
+        harassment: "Harassment",
+        fake_profile: "Fake profile",
+        underage: "Underage",
+        unsafe_behavior: "Unsafe behavior",
+        other: "Other",
+      },
     },
     chat: {
       loading: "Opening chat…",
@@ -163,11 +221,14 @@ export const t: Record<Locale, Dict> = {
     profile: {
       title: "Crée ton profil",
       subtitle: "Un vrai prénom et une photo, c'est tout.",
+      ageTitle: "Confirme ton âge",
+      ageSubtitle: "BarTap est réservé aux adultes.",
       addPhoto: "Ajouter une photo",
       firstName: "Prénom",
       bioOptional: "Bio (optionnel)",
       iAm: "Je suis",
       iWantToMeet: "Je veux rencontrer",
+      adultConfirm: "Je confirme avoir 18 ans ou plus.",
       save: "Enregistrer le profil",
       saving: "Enregistrement…",
       sessionError: "Impossible de démarrer ta session. Réessaie.",
@@ -175,6 +236,7 @@ export const t: Record<Locale, Dict> = {
       needPhoto: "Ajoute une photo de profil.",
       needGender: "Choisis ton genre.",
       needInterest: "Choisis qui tu veux rencontrer.",
+      needAdult: "Confirme que tu as 18 ans ou plus.",
       photoUploadFailed: "L'envoi de la photo a échoué.",
       genericError: "Un problème est survenu. Réessaie.",
     },
@@ -192,6 +254,12 @@ export const t: Record<Locale, Dict> = {
       liked: "Liké",
       likeError: "Impossible d'enregistrer ton like. Réessaie.",
       leave: "Quitter la soirée",
+      goInvisible: "Passer invisible",
+      invisibleTitle: "Tu es invisible",
+      invisibleBody:
+        "Tu n'apparais plus dans cette salle, et l'exploration est en pause jusqu'à ton retour.",
+      becomeVisible: "Redevenir visible",
+      visibilityError: "Impossible de changer ta visibilité. Réessaie.",
       matchKicker: "C'est un match",
       matchBody: "Vous vous êtes likés. Va lui dire bonjour, il est là ce soir.",
       matchDismiss: "Continuer à explorer",
@@ -201,6 +269,26 @@ export const t: Record<Locale, Dict> = {
       chat: "Chat",
       openChat: "Ouvrir le chat",
       activeMatches: "Matches de ce soir",
+      block: "Bloquer",
+      blockConfirm: (name) =>
+        `Bloquer ${name} ? Vous ne vous verrez plus, et tout match ou chat sera fermé.`,
+      blockError: "Impossible de bloquer cette personne. Réessaie.",
+      report: "Signaler",
+      reportTitle: (name) => `Signaler ${name}`,
+      reportReason: "Raison",
+      reportNote: "Ajouter une note (optionnel)",
+      reportSubmit: "Envoyer le signalement",
+      reportCancel: "Annuler",
+      reportSuccess: "Signalement envoyé.",
+      reportError: "Impossible d'envoyer le signalement. Réessaie.",
+      reportBlockPrompt: "Veux-tu aussi bloquer cette personne ?",
+      reportReasons: {
+        harassment: "Harcèlement",
+        fake_profile: "Faux profil",
+        underage: "Mineur",
+        unsafe_behavior: "Comportement dangereux",
+        other: "Autre",
+      },
     },
     chat: {
       loading: "Ouverture du chat…",
