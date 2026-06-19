@@ -59,6 +59,16 @@ When in doubt: *does this reduce the social friction of the first real-life cont
 - **Keep it simple.** No premature abstraction. Three similar lines beat one clever abstraction. Pull tooling and structure (folders, docs, libs) when a real need appears, not preemptively.
 - **Supabase access:** prefer typed queries; select only the columns you need (never leak email or phone via `select("*")`); enforce access with RLS, not client-side checks.
 
+### Supabase: how the DB is managed (read before any schema work)
+
+There is **no local Supabase stack** (no `supabase/config.toml`, no Docker). The database is a **remote project reached through the Supabase MCP**. Both agents need that MCP configured, or you can write migration files but not actually apply them.
+
+- **Migrations are dual-tracked:** write the SQL file under `supabase/migrations/` (so the history is in git) **and** apply it to the remote project with the MCP `apply_migration`. After any schema change, regenerate `lib/database.types.ts` (MCP `generate_typescript_types`) and run `get_advisors` (security) to catch missing policies/grants.
+- **Anonymous sign-in issues the `authenticated` role, not `anon`.** `signInAnonymously()` gives a real session whose role is `authenticated` (with `is_anonymous=true`). `anon` means *no session at all*. So **every RLS policy and every GRANT targets `authenticated`**; `anon` gets nothing. This has bitten us twice (RLS, then Storage upload policies written for `anon` silently denied every signed-in user).
+- **Objects created via the MCP need explicit `GRANT`s to `authenticated`.** Supabase's default-privilege grants do not apply to objects created by the MCP migration role, so RLS alone fails with `42501`. Grant the operations the table's policies allow (see `…_grants.sql`).
+- **An RLS policy must not reference the table it protects** (Postgres throws "infinite recursion in policy"). Compute the visible-id set in a `SECURITY DEFINER` helper in the **`private` schema** (PostgREST does not expose it, so it is not a callable RPC) and have the policy test membership against it. See `private.visible_profile_ids()` / `private.my_active_venue_ids()`.
+- **Scheduled jobs run in-database via `pg_cron`** (`cron.job`), not on Vercel. The night rollover (`bartap-close-ended-nights` → `public.close_ended_nights()`) lives there.
+
 ## Getting started
 
 ```bash
