@@ -7,11 +7,13 @@ import { ensureAnonSession } from "@/lib/auth";
 import { DEV_DEFAULT_VENUE_SLUG } from "@/lib/config";
 import { GENDERS, type Gender } from "@/lib/profile";
 import { browserLocale, t } from "@/lib/strings";
+import { useBrowserLocale } from "@/lib/useLocale";
 
 export default function ProfilePage() {
   const router = useRouter();
-  // Pre-venue page: no venue yet, so fall back to the browser language.
-  const locale = browserLocale();
+  // Pre-venue page: no venue yet, so fall back to the browser language
+  // (resolved after mount to avoid an SSR hydration mismatch).
+  const locale = useBrowserLocale();
   const s = t[locale].profile;
   const genderLabels = t[locale].genders;
 

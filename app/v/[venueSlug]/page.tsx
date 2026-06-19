@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { ensureAnonSession } from "@/lib/auth";
 import { isMutuallyCompatible } from "@/lib/profile";
 import { browserLocale, localeForCity, t } from "@/lib/strings";
+import { useBrowserLocale } from "@/lib/useLocale";
 import type { Database } from "@/lib/database.types";
 
 // Public-facing profile: only the columns other users are ever allowed to see.
@@ -42,8 +43,10 @@ export default function VenueRoom() {
   const [errorMsg, setErrorMsg] = useState("");
 
   // Locale follows the venue's city once it is known; before that (loading,
-  // hard errors) we fall back to the browser language.
-  const s = t[venue ? localeForCity(venue.city) : browserLocale()].room;
+  // hard errors) we fall back to the browser language (resolved after mount to
+  // avoid an SSR hydration mismatch on the loading screen).
+  const browserLoc = useBrowserLocale();
+  const s = t[venue ? localeForCity(venue.city) : browserLoc].room;
 
   // Keep the latest "me" available to realtime callbacks without resubscribing.
   const meRef = useRef<PublicProfile | null>(null);

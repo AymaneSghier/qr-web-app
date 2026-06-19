@@ -6,12 +6,14 @@ import { supabase } from "@/lib/supabase";
 import { ensureAnonSession } from "@/lib/auth";
 import { DEV_DEFAULT_VENUE_SLUG } from "@/lib/config";
 import { browserLocale, t } from "@/lib/strings";
+import { useBrowserLocale } from "@/lib/useLocale";
 
 export default function Home() {
   const router = useRouter();
   const [error, setError] = useState("");
-  // Pre-venue page: no venue yet, so fall back to the browser language.
-  const s = t[browserLocale()].landing;
+  // Pre-venue page: no venue yet, so fall back to the browser language
+  // (resolved after mount to avoid an SSR hydration mismatch).
+  const s = t[useBrowserLocale()].landing;
 
   useEffect(() => {
     let active = true;
