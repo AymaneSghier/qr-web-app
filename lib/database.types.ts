@@ -63,6 +63,7 @@ export type Database = {
       likes: {
         Row: {
           created_at: string
+          expires_at: string
           id: string
           liked_id: string
           liker_id: string
@@ -70,6 +71,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          expires_at?: string
           id?: string
           liked_id: string
           liker_id: string
@@ -77,6 +79,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          expires_at?: string
           id?: string
           liked_id?: string
           liker_id?: string
