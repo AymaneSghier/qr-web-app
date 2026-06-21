@@ -480,11 +480,11 @@ export default function VenueRoom() {
   if (status === "left") {
     return (
       <Shell>
-        <h2 className="text-2xl font-bold">{s.leftTitle}</h2>
-        <p className="mt-3 text-zinc-400">{s.leftBody}</p>
+        <h2 className="text-2xl font-black">{s.leftTitle}</h2>
+        <p className="night-muted mt-3">{s.leftBody}</p>
         <button
           onClick={rejoin}
-          className="mt-8 w-full rounded-2xl bg-yellow-400 px-5 py-4 font-bold text-black transition hover:bg-yellow-300"
+          className="night-button night-button-primary mt-8 w-full px-5 py-4"
         >
           {s.rejoin}
         </button>
@@ -494,37 +494,39 @@ export default function VenueRoom() {
 
   if (status === "invisible") {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-black via-zinc-950 to-neutral-900 px-6 py-10 text-white">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
-            BarTap
+      <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
+        <div className="night-content mx-auto max-w-3xl">
+          <p className="night-kicker">BarTap</p>
+          <h1 className="mt-4 text-5xl font-black leading-tight tracking-normal">
+            {s.invisibleTitle}
+          </h1>
+          <p className="night-muted mt-4 max-w-xl leading-relaxed">
+            {s.invisibleBody}
           </p>
-          <h1 className="mt-3 text-4xl font-black">{s.invisibleTitle}</h1>
-          <p className="mt-3 text-zinc-400">{s.invisibleBody}</p>
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             <button
               onClick={becomeVisible}
-              className="rounded-2xl bg-yellow-400 px-5 py-4 font-bold text-black transition hover:bg-yellow-300"
+              className="night-button night-button-primary px-5 py-4"
             >
               {s.becomeVisible}
             </button>
             <button
               onClick={leave}
-              className="rounded-2xl border border-white/10 px-5 py-4 font-bold text-white transition hover:border-white/30"
+              className="night-button night-button-secondary px-5 py-4"
             >
               {s.leave}
             </button>
           </div>
           {matches.length > 0 && (
             <section className="mt-10">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
+              <h2 className="night-kicker">
                 {s.activeMatches}
               </h2>
               <div className="mt-4 grid gap-3">
                 {matches.map((match) => (
                   <div
                     key={match.id}
-                    className="rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3"
+                    className="night-card-hot rounded-2xl p-3"
                   >
                     <Link
                       href={`/chat/${match.id}`}
@@ -534,13 +536,13 @@ export default function VenueRoom() {
                       <img
                         src={match.other.photo_url}
                         alt={match.other.first_name}
-                        className="h-12 w-12 rounded-full object-cover"
+                        className="night-photo-ring h-12 w-12 rounded-full object-cover"
                       />
                       <span>
                         <span className="block font-bold text-white">
                           {match.other.first_name}
                         </span>
-                        <span className="block text-sm text-yellow-200">
+                        <span className="block text-sm text-[#fde7bd]">
                           {s.chat}
                         </span>
                       </span>
@@ -550,7 +552,7 @@ export default function VenueRoom() {
               </div>
             </section>
           )}
-          {errorMsg && <p className="mt-6 text-sm text-red-400">{errorMsg}</p>}
+          {errorMsg && <p className="mt-6 text-sm text-red-300">{errorMsg}</p>}
         </div>
       </main>
     );
@@ -559,44 +561,56 @@ export default function VenueRoom() {
   const visible = candidates.filter((c) => !matchedIds.has(c.id));
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-black via-zinc-950 to-neutral-900 px-6 py-10 text-white">
-      <div className="mx-auto max-w-6xl">
-        <div className="flex items-start justify-between gap-4">
+    <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
+      <div className="night-content mx-auto max-w-6xl">
+        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
-              BarTap
-            </p>
-            <h1 className="mt-3 text-4xl font-black">
+            <p className="night-kicker">BarTap</p>
+            <h1 className="mt-4 text-5xl font-black leading-[0.95] tracking-normal sm:text-6xl">
               {s.whosHere(venue?.name ?? "")}
             </h1>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[#e7c7b4]">
+              {s.pitch}
+            </p>
           </div>
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+          <div className="flex shrink-0 gap-2">
             <button
               onClick={goInvisible}
-              className="rounded-2xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-2 text-sm font-semibold text-yellow-100 transition hover:border-yellow-300"
+              className="night-button night-button-secondary px-4 py-3 text-sm"
             >
               {s.goInvisible}
             </button>
             <button
               onClick={leave}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:border-white/30 hover:text-white"
+              className="night-button night-button-secondary px-4 py-3 text-sm"
             >
               {s.leave}
             </button>
           </div>
         </div>
-        <p className="mt-2 text-zinc-400">{s.pitch}</p>
+
+        <div className="mt-8 flex flex-wrap gap-3 text-sm font-semibold">
+          <span className="night-pill rounded-full px-4 py-2">
+            {s.hereForYou(visible.length)}
+          </span>
+          <span className="night-pill rounded-full px-4 py-2">
+            {s.mutualCount(matches.length)}
+          </span>
+          <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[#d9bbb1]">
+            {s.discreetByDesign}
+          </span>
+        </div>
 
         {matches.length > 0 && (
           <section className="mt-8">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
+            <h2 className="night-kicker">
               {s.activeMatches}
             </h2>
             <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
               {matches.map((match) => (
                 <div
                   key={match.id}
-                  className="min-w-56 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-3"
+                  className="night-card-hot min-w-60 rounded-2xl p-3"
                 >
                   <Link
                     href={`/chat/${match.id}`}
@@ -606,13 +620,13 @@ export default function VenueRoom() {
                     <img
                       src={match.other.photo_url}
                       alt={match.other.first_name}
-                      className="h-12 w-12 rounded-full object-cover"
+                      className="night-photo-ring h-12 w-12 rounded-full object-cover"
                     />
                     <span>
                       <span className="block font-bold text-white">
                         {match.other.first_name}
                       </span>
-                      <span className="block text-sm text-yellow-200">
+                      <span className="block text-sm text-[#fde7bd]">
                         {s.chat}
                       </span>
                     </span>
@@ -620,13 +634,13 @@ export default function VenueRoom() {
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <button
                       onClick={() => openReport(match.other)}
-                      className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-white/30"
+                      className="night-button night-button-secondary px-3 py-2 text-xs"
                     >
                       {s.report}
                     </button>
                     <button
                       onClick={() => confirmBlock(match.other)}
-                      className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-semibold text-red-200 transition hover:border-red-300"
+                      className="night-button night-button-danger px-3 py-2 text-xs"
                     >
                       {s.block}
                     </button>
@@ -638,7 +652,9 @@ export default function VenueRoom() {
         )}
 
         {visible.length === 0 ? (
-          <p className="mt-12 text-zinc-500">{s.empty}</p>
+          <div className="night-panel mt-12 rounded-[2rem] p-8 text-center">
+            <p className="night-muted">{s.empty}</p>
+          </div>
         ) : (
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {visible.map((c) => {
@@ -646,25 +662,29 @@ export default function VenueRoom() {
               return (
                 <div
                   key={c.id}
-                  className="rounded-3xl border border-white/10 bg-white/5 p-6"
+                  className="night-card group overflow-hidden rounded-[1.75rem] p-4"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={c.photo_url}
-                    alt={c.first_name}
-                    className="h-48 w-full rounded-2xl object-cover"
-                  />
-                  <h2 className="mt-4 text-2xl font-bold">{c.first_name}</h2>
-                  <p className="mt-2 min-h-[1.5rem] text-zinc-400">
-                    {c.bio ?? ""}
-                  </p>
+                  <div className="relative overflow-hidden rounded-[1.25rem]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={c.photo_url}
+                      alt={c.first_name}
+                      className="h-72 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-4">
+                      <h2 className="text-3xl font-black">{c.first_name}</h2>
+                      <p className="mt-1 min-h-[1.25rem] text-sm text-[#e7c7b4]">
+                        {c.bio ?? ""}
+                      </p>
+                    </div>
+                  </div>
                   <button
                     onClick={() => like(c)}
                     disabled={liked}
-                    className={`mt-4 w-full rounded-2xl px-5 py-3 font-bold transition ${
+                    className={`night-button mt-4 w-full px-5 py-3 ${
                       liked
-                        ? "cursor-default bg-white/10 text-zinc-400"
-                        : "bg-yellow-400 text-black hover:bg-yellow-300"
+                        ? "cursor-default border border-white/10 bg-white/10 text-[#bda7a5]"
+                        : "night-button-primary"
                     }`}
                   >
                     {liked ? s.liked : s.like}
@@ -672,13 +692,13 @@ export default function VenueRoom() {
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <button
                       onClick={() => openReport(c)}
-                      className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-white/30"
+                      className="night-button night-button-secondary px-3 py-2 text-xs"
                     >
                       {s.report}
                     </button>
                     <button
                       onClick={() => confirmBlock(c)}
-                      className="rounded-xl border border-red-400/30 px-3 py-2 text-xs font-semibold text-red-200 transition hover:border-red-300"
+                      className="night-button night-button-danger px-3 py-2 text-xs"
                     >
                       {s.block}
                     </button>
@@ -691,16 +711,16 @@ export default function VenueRoom() {
       </div>
 
       {newMatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur">
-          <div className="w-full max-w-sm rounded-3xl border border-yellow-400/40 bg-zinc-950 p-8 text-center shadow-2xl">
-            <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur-xl">
+          <div className="night-card-hot w-full max-w-sm rounded-[2rem] p-8 text-center">
+            <p className="night-kicker">
               {s.matchKicker}
             </p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={newMatch.other.photo_url}
               alt={newMatch.other.first_name}
-              className="mx-auto mt-6 h-32 w-32 rounded-full object-cover"
+              className="night-photo-ring mx-auto mt-6 h-32 w-32 rounded-full object-cover"
             />
             <h2 className="mt-4 text-3xl font-black">
               {newMatch.other.first_name}
@@ -709,13 +729,13 @@ export default function VenueRoom() {
             <div className="mt-8 grid gap-3">
               <Link
                 href={`/chat/${newMatch.id}`}
-                className="w-full rounded-2xl bg-yellow-400 px-5 py-4 font-bold text-black transition hover:bg-yellow-300"
+                className="night-button night-button-primary w-full px-5 py-4 text-center"
               >
                 {s.openChat}
               </Link>
               <button
                 onClick={() => setNewMatch(null)}
-                className="w-full rounded-2xl border border-white/10 px-5 py-4 font-bold text-white transition hover:border-white/30"
+                className="night-button night-button-secondary w-full px-5 py-4"
               >
                 {s.matchDismiss}
               </button>
@@ -725,10 +745,10 @@ export default function VenueRoom() {
       )}
 
       {reportTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur-xl">
           <form
             onSubmit={submitReport}
-            className="w-full max-w-sm rounded-3xl border border-white/10 bg-zinc-950 p-6 shadow-2xl"
+            className="night-panel w-full max-w-sm rounded-[2rem] p-6"
           >
             <h2 className="text-2xl font-black">
               {s.reportTitle(reportTarget.first_name)}
@@ -743,14 +763,14 @@ export default function VenueRoom() {
                   <button
                     type="button"
                     onClick={() => blockProfile(reportTarget)}
-                    className="rounded-2xl bg-red-500 px-5 py-3 font-bold text-white transition hover:bg-red-400"
+                    className="night-button night-button-danger px-5 py-3"
                   >
                     {s.block}
                   </button>
                   <button
                     type="button"
                     onClick={() => setReportTarget(null)}
-                    className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-white transition hover:border-white/30"
+                    className="night-button night-button-secondary px-5 py-3"
                   >
                     {s.reportCancel}
                   </button>
@@ -765,7 +785,7 @@ export default function VenueRoom() {
                     onChange={(event) =>
                       setReportReason(event.target.value as ReportReason)
                     }
-                    className="mt-2 w-full rounded-2xl border border-white/10 bg-black px-4 py-3 text-white outline-none focus:border-yellow-400"
+                    className="night-input mt-2 px-4 py-3"
                   >
                     {REPORT_REASONS.map((reason) => (
                       <option key={reason} value={reason}>
@@ -779,7 +799,7 @@ export default function VenueRoom() {
                   onChange={(event) => setReportNote(event.target.value)}
                   maxLength={500}
                   placeholder={s.reportNote}
-                  className="mt-4 h-28 w-full resize-none rounded-2xl border border-white/10 bg-black px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
+                  className="night-input mt-4 h-28 resize-none px-4 py-3"
                 />
                 {errorMsg && (
                   <p className="mt-3 text-sm text-red-400">{errorMsg}</p>
@@ -787,14 +807,14 @@ export default function VenueRoom() {
                 <div className="mt-6 grid gap-3">
                   <button
                     type="submit"
-                    className="rounded-2xl bg-yellow-400 px-5 py-3 font-bold text-black transition hover:bg-yellow-300"
+                    className="night-button night-button-primary px-5 py-3"
                   >
                     {s.reportSubmit}
                   </button>
                   <button
                     type="button"
                     onClick={() => setReportTarget(null)}
-                    className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-white transition hover:border-white/30"
+                    className="night-button night-button-secondary px-5 py-3"
                   >
                     {s.reportCancel}
                   </button>
@@ -847,11 +867,9 @@ export default function VenueRoom() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-black via-zinc-950 to-neutral-900 px-6 text-white">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-2xl backdrop-blur">
-        <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
-          BarTap
-        </p>
+    <main className="night-shell flex min-h-screen items-center justify-center px-6 text-white">
+      <div className="night-content night-panel w-full max-w-md rounded-[2rem] p-8 text-center">
+        <p className="night-kicker">BarTap</p>
         <div className="mt-6">{children}</div>
       </div>
     </main>

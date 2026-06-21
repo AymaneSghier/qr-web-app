@@ -296,7 +296,7 @@ export default function MatchChatPage() {
         <p>{s.closed}</p>
         <Link
           href={`/v/${match.venue.slug}`}
-          className="mt-6 inline-flex rounded-2xl bg-yellow-400 px-5 py-3 font-bold text-black"
+          className="night-button night-button-primary mt-6 inline-flex px-5 py-3"
         >
           {s.backToRoom}
         </Link>
@@ -309,12 +309,12 @@ export default function MatchChatPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-zinc-950 text-white">
-      <header className="sticky top-0 z-10 border-b border-white/10 bg-zinc-950/95 px-5 py-4 backdrop-blur">
+    <main className="night-shell flex min-h-screen flex-col text-white">
+      <header className="night-content sticky top-0 z-10 border-b border-white/10 bg-[#070305]/80 px-4 py-4 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center gap-4">
           <Link
             href={`/v/${match.venue.slug}`}
-            className="rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-zinc-300"
+            className="night-button night-button-secondary rounded-full px-3 py-2 text-sm"
           >
             {s.backToRoom}
           </Link>
@@ -322,22 +322,22 @@ export default function MatchChatPage() {
           <img
             src={other.photo_url}
             alt={other.first_name}
-            className="h-12 w-12 rounded-full object-cover"
+            className="night-photo-ring h-12 w-12 rounded-full object-cover"
           />
           <div className="min-w-0">
             <h1 className="truncate text-xl font-black">{other.first_name}</h1>
-            <p className="truncate text-sm text-zinc-400">{s.expiresTonight}</p>
+            <p className="truncate text-sm text-[#d9bbb1]">{s.expiresTonight}</p>
           </div>
           <div className="ml-auto flex shrink-0 gap-2">
             <button
               onClick={openReport}
-              className="rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-zinc-300 transition hover:border-white/30"
+              className="night-button night-button-secondary rounded-full px-3 py-2 text-sm"
             >
               {roomS.report}
             </button>
             <button
               onClick={confirmBlockOther}
-              className="rounded-full border border-red-400/30 px-3 py-2 text-sm font-semibold text-red-200 transition hover:border-red-300"
+              className="night-button night-button-danger rounded-full px-3 py-2 text-sm"
             >
               {roomS.block}
             </button>
@@ -345,9 +345,11 @@ export default function MatchChatPage() {
         </div>
       </header>
 
-      <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3 px-5 py-6">
+      <section className="night-content mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3 px-4 py-6 sm:px-5">
         {messages.length === 0 ? (
-          <p className="mt-16 text-center text-zinc-500">{s.empty}</p>
+          <div className="night-panel mt-16 rounded-[2rem] p-8 text-center">
+            <p className="night-muted">{s.empty}</p>
+          </div>
         ) : (
           messages.map((message) => {
             const mine = message.sender_id === me.id;
@@ -359,8 +361,8 @@ export default function MatchChatPage() {
                 <p
                   className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     mine
-                      ? "bg-yellow-400 text-black"
-                      : "bg-white/10 text-zinc-100"
+                      ? "bg-gradient-to-br from-[#f6b35a] via-[#ff7aa8] to-[#c084fc] text-[#120508] shadow-[0_14px_36px_rgba(255,61,129,0.22)]"
+                      : "border border-white/10 bg-white/10 text-[#fff7ed]"
                   }`}
                 >
                   {message.body}
@@ -374,7 +376,7 @@ export default function MatchChatPage() {
 
       <form
         onSubmit={sendMessage}
-        className="sticky bottom-0 border-t border-white/10 bg-zinc-950/95 px-5 py-4 backdrop-blur"
+        className="night-content sticky bottom-0 border-t border-white/10 bg-[#070305]/84 px-4 py-4 backdrop-blur-xl sm:px-5"
       >
         <div className="mx-auto flex max-w-3xl gap-3">
           <input
@@ -382,27 +384,27 @@ export default function MatchChatPage() {
             onChange={(event) => setDraft(event.target.value)}
             maxLength={2000}
             placeholder={s.placeholder}
-            className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-yellow-400"
+            className="night-input min-w-0 flex-1 px-4 py-3"
           />
           <button
             disabled={sending || draft.trim().length === 0}
-            className="rounded-2xl bg-yellow-400 px-5 py-3 font-bold text-black transition hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-zinc-500"
+            className="night-button night-button-primary px-5 py-3 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-[#8b7773]"
           >
             {s.send}
           </button>
         </div>
         {errorMsg && (
-          <p className="mx-auto mt-3 max-w-3xl text-sm text-red-400">
+          <p className="mx-auto mt-3 max-w-3xl text-sm text-red-300">
             {errorMsg}
           </p>
         )}
       </form>
 
       {reportOpen && other && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur-xl">
           <form
             onSubmit={submitReport}
-            className="w-full max-w-sm rounded-3xl border border-white/10 bg-zinc-950 p-6 shadow-2xl"
+            className="night-panel w-full max-w-sm rounded-[2rem] p-6"
           >
             <h2 className="text-2xl font-black">
               {roomS.reportTitle(other.first_name)}
@@ -417,14 +419,14 @@ export default function MatchChatPage() {
                   <button
                     type="button"
                     onClick={blockOther}
-                    className="rounded-2xl bg-red-500 px-5 py-3 font-bold text-white transition hover:bg-red-400"
+                    className="night-button night-button-danger px-5 py-3"
                   >
                     {roomS.block}
                   </button>
                   <button
                     type="button"
                     onClick={() => setReportOpen(false)}
-                    className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-white transition hover:border-white/30"
+                    className="night-button night-button-secondary px-5 py-3"
                   >
                     {roomS.reportCancel}
                   </button>
@@ -439,7 +441,7 @@ export default function MatchChatPage() {
                     onChange={(event) =>
                       setReportReason(event.target.value as ReportReason)
                     }
-                    className="mt-2 w-full rounded-2xl border border-white/10 bg-black px-4 py-3 text-white outline-none focus:border-yellow-400"
+                    className="night-input mt-2 px-4 py-3"
                   >
                     {REPORT_REASONS.map((reason) => (
                       <option key={reason} value={reason}>
@@ -453,7 +455,7 @@ export default function MatchChatPage() {
                   onChange={(event) => setReportNote(event.target.value)}
                   maxLength={500}
                   placeholder={roomS.reportNote}
-                  className="mt-4 h-28 w-full resize-none rounded-2xl border border-white/10 bg-black px-4 py-3 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
+                  className="night-input mt-4 h-28 resize-none px-4 py-3"
                 />
                 {errorMsg && (
                   <p className="mt-3 text-sm text-red-400">{errorMsg}</p>
@@ -461,14 +463,14 @@ export default function MatchChatPage() {
                 <div className="mt-6 grid gap-3">
                   <button
                     type="submit"
-                    className="rounded-2xl bg-yellow-400 px-5 py-3 font-bold text-black transition hover:bg-yellow-300"
+                    className="night-button night-button-primary px-5 py-3"
                   >
                     {roomS.reportSubmit}
                   </button>
                   <button
                     type="button"
                     onClick={() => setReportOpen(false)}
-                    className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-white transition hover:border-white/30"
+                    className="night-button night-button-secondary px-5 py-3"
                   >
                     {roomS.reportCancel}
                   </button>
@@ -490,13 +492,13 @@ function Shell({
   tone?: "muted" | "error";
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-white">
+    <main className="night-shell flex min-h-screen items-center justify-center px-6 text-white">
       <div
-        className={`w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-sm shadow-2xl ${
-          tone === "error" ? "text-red-400" : "text-zinc-500"
+        className={`night-content night-panel w-full max-w-md rounded-[2rem] p-8 text-center text-sm ${
+          tone === "error" ? "text-red-300" : "night-muted"
         }`}
       >
-          {children}
+        {children}
       </div>
     </main>
   );

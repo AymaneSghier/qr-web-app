@@ -62,20 +62,29 @@ export default function Home() {
   }, [router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-black via-zinc-950 to-neutral-900 px-6 text-white">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-2xl backdrop-blur">
-        <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
-          {s.welcome}
-        </p>
-        <h1 className="mt-3 text-6xl font-black tracking-tight">BarTap</h1>
-        <p className="mt-4 text-lg text-zinc-300">{s.tagline}</p>
+    <main className="night-shell flex min-h-screen items-end px-6 py-10 sm:items-center">
+      <section className="night-content mx-auto w-full max-w-5xl">
+        <div className="max-w-2xl">
+          <p className="night-kicker">{s.welcome}</p>
+          <h1 className="mt-4 text-6xl font-black leading-[0.9] tracking-normal text-white sm:text-8xl">
+            BarTap
+          </h1>
+          <p className="mt-6 max-w-sm text-xl font-medium leading-relaxed text-[#f9d7c4] sm:text-2xl">
+            {s.tagline}
+          </p>
+        </div>
 
         {error ? (
-          <p className="mt-8 text-sm text-red-400">{error}</p>
+          <p className="mt-10 max-w-md rounded-2xl border border-red-300/20 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+            {error}
+          </p>
         ) : (
-          <p className="mt-8 text-sm text-zinc-500">{s.settingUp}</p>
+          <div className="mt-10 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-[#e7c7b4] backdrop-blur">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#f6b35a] shadow-[0_0_18px_rgba(246,179,90,0.9)]" />
+            {s.settingUp}
+          </div>
         )}
-      </div>
+      </section>
     </main>
   );
 }

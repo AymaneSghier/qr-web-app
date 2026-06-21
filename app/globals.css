@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #070305;
+  --foreground: #fff7ed;
+  --night-ink: #070305;
+  --night-wine: #2a0715;
+  --night-rose: #ff3d81;
+  --night-amber: #f6b35a;
+  --night-violet: #8b5cf6;
+  --night-muted: #bda7a5;
 }
 
 @theme inline {
@@ -12,15 +18,180 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: rgba(255, 61, 129, 0.35);
+  color: #fff7ed;
+}
+
+@layer components {
+  .night-shell {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(255, 61, 129, 0.22), transparent 32rem),
+      radial-gradient(circle at 82% 8%, rgba(139, 92, 246, 0.2), transparent 30rem),
+      radial-gradient(circle at 50% 105%, rgba(246, 179, 90, 0.16), transparent 34rem),
+      linear-gradient(145deg, #050203 0%, #13050b 45%, #06030a 100%);
+    color: #fff7ed;
+  }
+
+  .night-shell::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 78%);
+  }
+
+  .night-shell::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.34) 100%),
+      radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.46) 100%);
+  }
+
+  .night-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .night-panel {
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035));
+    box-shadow:
+      0 24px 80px rgba(0, 0, 0, 0.42),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(22px);
+  }
+
+  .night-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
+    box-shadow:
+      0 18px 70px rgba(0, 0, 0, 0.34),
+      0 0 0 1px rgba(255, 61, 129, 0.04);
+    backdrop-filter: blur(18px);
+  }
+
+  .night-card-hot {
+    border-color: rgba(246, 179, 90, 0.28);
+    background:
+      linear-gradient(145deg, rgba(246, 179, 90, 0.14), rgba(255, 61, 129, 0.06)),
+      rgba(255, 255, 255, 0.045);
+    box-shadow:
+      0 20px 80px rgba(0, 0, 0, 0.42),
+      0 0 42px rgba(255, 61, 129, 0.12);
+  }
+
+  .night-kicker {
+    color: #f6b35a;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+  }
+
+  .night-muted {
+    color: var(--night-muted);
+  }
+
+  .night-input {
+    width: 100%;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(5, 2, 3, 0.56);
+    color: #fff7ed;
+    outline: none;
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      background 180ms ease;
+  }
+
+  .night-input::placeholder {
+    color: rgba(189, 167, 165, 0.55);
+  }
+
+  .night-input:focus {
+    border-color: rgba(246, 179, 90, 0.72);
+    background: rgba(8, 3, 5, 0.78);
+    box-shadow: 0 0 0 4px rgba(246, 179, 90, 0.12);
+  }
+
+  .night-button {
+    border-radius: 1rem;
+    font-weight: 800;
+    transition:
+      transform 180ms ease,
+      border-color 180ms ease,
+      background 180ms ease,
+      box-shadow 180ms ease,
+      color 180ms ease;
+  }
+
+  .night-button:hover {
+    transform: translateY(-1px);
+  }
+
+  .night-button:active {
+    transform: translateY(0);
+  }
+
+  .night-button-primary {
+    background: linear-gradient(135deg, #f6b35a, #ff6b9d 58%, #c084fc);
+    color: #120508;
+    box-shadow: 0 16px 42px rgba(255, 61, 129, 0.24);
+  }
+
+  .night-button-primary:hover {
+    box-shadow: 0 18px 58px rgba(255, 61, 129, 0.32);
+  }
+
+  .night-button-secondary {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.055);
+    color: #fff7ed;
+  }
+
+  .night-button-secondary:hover {
+    border-color: rgba(246, 179, 90, 0.48);
+    background: rgba(246, 179, 90, 0.08);
+  }
+
+  .night-button-danger {
+    border: 1px solid rgba(248, 113, 113, 0.34);
+    background: rgba(127, 29, 29, 0.14);
+    color: #fecaca;
+  }
+
+  .night-button-danger:hover {
+    border-color: rgba(252, 165, 165, 0.58);
+    background: rgba(127, 29, 29, 0.24);
+  }
+
+  .night-pill {
+    border: 1px solid rgba(246, 179, 90, 0.26);
+    background: rgba(246, 179, 90, 0.09);
+    color: #fde7bd;
+  }
+
+  .night-photo-ring {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.12),
+      0 0 34px rgba(255, 61, 129, 0.22);
+  }
 }
