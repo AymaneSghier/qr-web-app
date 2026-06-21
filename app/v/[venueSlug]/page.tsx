@@ -223,7 +223,11 @@ export default function VenueRoom() {
             isVisible
               ? loadCandidates(venueRow.id, user.id, myProfile)
               : Promise.resolve([]),
-            supabase.from("likes").select("liked_id").eq("venue_id", venueRow.id),
+            supabase
+              .from("likes")
+              .select("liked_id")
+              .eq("venue_id", venueRow.id)
+              .gt("expires_at", new Date().toISOString()),
             supabase
               .from("matches")
               .select("id, profile_a, profile_b, expires_at")
