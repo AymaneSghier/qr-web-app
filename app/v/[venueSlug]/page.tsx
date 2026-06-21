@@ -795,13 +795,7 @@ export default function VenueRoom() {
             <p className="mt-5 text-sm font-semibold text-[#fde7bd]">
               {s.emptyActionHint}
             </p>
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
-              <button
-                onClick={goInvisible}
-                className="night-button night-button-secondary px-5 py-3"
-              >
-                {s.goInvisible}
-              </button>
+            <div className="mt-7">
               <button
                 onClick={leave}
                 className="night-button night-button-secondary px-5 py-3"
