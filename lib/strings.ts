@@ -39,6 +39,7 @@ type Dict = {
   profile: {
     title: string;
     subtitle: string;
+    tonightAt: (venue: string) => string;
     ageTitle: string;
     ageSubtitle: string;
     trustPills: string[];
@@ -143,6 +144,7 @@ export const t: Record<Locale, Dict> = {
     profile: {
       title: "Your profile is your vibe",
       subtitle: "A real first name, a clear photo, and the energy you bring.",
+      tonightAt: (venue) => `Tonight at ${venue}`,
       ageTitle: "Confirm your age",
       ageSubtitle: "Good energy only. BarTap is for adults.",
       trustPills: ["Discreet taps", "Mutual only", "You stay in control"],
@@ -249,6 +251,7 @@ export const t: Record<Locale, Dict> = {
     profile: {
       title: "Ton profil, ton énergie",
       subtitle: "Un vrai prénom, une photo claire, et l'énergie que tu amènes.",
+      tonightAt: (venue) => `Ce soir à ${venue}`,
       ageTitle: "Confirme ton âge",
       ageSubtitle: "Bonne énergie seulement. BarTap est réservé aux adultes.",
       trustPills: [
