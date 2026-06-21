@@ -179,8 +179,9 @@ export const t: Record<Locale, Dict> = {
         "They only know if it is mutual. You stay in control of your attention.",
       firstTimeHintDismiss: "Got it",
       emptyTitle: "You're in",
-      empty: "The room is quiet for now. Keep this open while the night fills up.",
-      emptyActionHint: "You can go invisible or leave any time.",
+      empty:
+        "The room is quiet for now. Stay visible while the night fills up.",
+      emptyActionHint: "You can still leave any time.",
       likeHint: "Only revealed if it is mutual.",
       like: "Tap",
       liked: "Tapped",
@@ -290,8 +291,8 @@ export const t: Record<Locale, Dict> = {
       firstTimeHintDismiss: "Compris",
       emptyTitle: "Tu es dedans",
       empty:
-        "La salle est calme pour l'instant. Garde ça ouvert pendant que la soirée se remplit.",
-      emptyActionHint: "Tu peux passer invisible ou quitter quand tu veux.",
+        "La salle est calme pour l'instant. Reste visible pendant que la soirée se remplit.",
+      emptyActionHint: "Tu peux toujours quitter quand tu veux.",
       likeHint: "Révélé seulement si c'est mutuel.",
       like: "Taper",
       liked: "Tapé",
