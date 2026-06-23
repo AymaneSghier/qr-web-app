@@ -111,4 +111,12 @@ npm run lint     # eslint
 npm run build    # production build
 ```
 
+For phone testing against the local dev server, Next.js 16 blocks dev assets
+from LAN origins unless they are listed in `next.config.ts`
+(`allowedDevOrigins`). That list is driven by the `DEV_LAN_ORIGIN` env var, so
+set it to your machine's LAN IP in `.env.local` rather than hardcoding an IP
+in the repo. If the phone shows the shell but stays stuck on the landing
+loading text, check the dev-server logs for blocked cross-origin requests and
+confirm `DEV_LAN_ORIGIN` matches the current LAN IP.
+
 **Status and what to build next:** see `docs/roadmap.md`.
