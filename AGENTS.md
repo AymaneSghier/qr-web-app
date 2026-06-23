@@ -59,37 +59,15 @@ When in doubt: *does this reduce the social friction of the first real-life cont
 - **Keep it simple.** No premature abstraction. Three similar lines beat one clever abstraction. Pull tooling and structure (folders, docs, libs) when a real need appears, not preemptively.
 - **Supabase access:** prefer typed queries; select only the columns you need (never leak email or phone via `select("*")`); enforce access with RLS, not client-side checks.
 
-## Branch And PR Workflow
+### Git workflow
 
-- Never commit directly to `main`.
-- Never push directly to `main`.
-- Do all work on a feature branch.
-- Before starting new work, update local `main`:
+Work flows **issue → branch → PR → squash-merge → delete branch**, off `main`.
 
-  ```bash
-  git checkout main
-  git pull origin main
-  ```
-
-- Create one branch per task:
-
-  ```bash
-  git checkout -b feature/<task-name>
-  ```
-
-- When the task is complete:
-
-  ```bash
-  git add .
-  git commit -m "feat: description"
-  git push origin <branch-name>
-  ```
-
-- Open a pull request from the feature branch into `main`.
-- `main` is protected and requires one approval before merge.
-- Do not merge directly without review.
-- After a PR is merged, update local `main` before starting the next task.
-- Task states move through `Backlog -> Ready -> In Progress -> Review -> Done`.
+- **Branch per unit of work**, named `feature/...` or `fix/...`, cut from an up-to-date `main`. One branch = one PR.
+- **Open a PR into `main`** for every change; that is where the diff is reviewed, CI runs, and the other founder approves. Link the issue with `Closes #N` when there is one. Issues are optional for trivial work but expected for anything worth tracking or discussing.
+- **Squash and merge, then delete the branch.** Keeps `main` history at one commit per PR and the branch list clean.
+- **Do not let PRs pile up.** An open PR gets reviewed and merged quickly; a stack of long-lived branches against a moving `main` is how avoidable conflicts and schema drift appear.
+- **Agents never merge a PR or apply a migration to the shared DB on their own.** An agent writes the code and the migration file and opens the PR; merging and applying to the remote stay founder-gated.
 
 ### Supabase: how the DB is managed (read before any schema work)
 
@@ -100,6 +78,7 @@ There is **no local Supabase stack** (no `supabase/config.toml`, no Docker). The
 - **Objects created via the MCP need explicit `GRANT`s to `authenticated`.** Supabase's default-privilege grants do not apply to objects created by the MCP migration role, so RLS alone fails with `42501`. Grant the operations the table's policies allow (see `…_grants.sql`).
 - **An RLS policy must not reference the table it protects** (Postgres throws "infinite recursion in policy"). Compute the visible-id set in a `SECURITY DEFINER` helper in the **`private` schema** (PostgREST does not expose it, so it is not a callable RPC) and have the policy test membership against it. See `private.visible_profile_ids()` / `private.my_active_venue_ids()`.
 - **Scheduled jobs run in-database via `pg_cron`** (`cron.job`), not on Vercel. The night rollover (`bartap-close-ended-nights` → `public.close_ended_nights()`) lives there.
+- **Testing a schema change before merge, on the single shared remote.** There is one remote DB shared by both founders and no local stack, so you cannot test schema-dependent code without applying the migration *somewhere* — yet applying it changes the DB for the other founder too. The rule while pre-launch (no real users; the shared DB *is* the dev DB): an **additive** migration (new nullable column, new table nobody reads yet) is safe to apply early and test, since existing code does not reference it. A **behavioral or destructive** one (alters a constraint, trigger, or function, drops a column) changes the DB's behavior for the other founder immediately — announce it before applying and merge the PR promptly so code and DB resync. The migration file always travels in the PR (dual-tracking) regardless of when it was applied. When there are real users, split a separate prod project from this dev one and gate prod migrations to merge/release time (Supabase per-PR branching is the cleaner long-term option, deferred as paid/complex for now).
 
 ## Getting started
 
