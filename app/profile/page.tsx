@@ -184,28 +184,44 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-black via-zinc-950 to-neutral-900 px-6 py-10 text-white">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur">
-        <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
-          BarTap
-        </p>
-        <h1 className="mt-3 text-4xl font-black">
-          {existingProfile ? s.ageTitle : s.title}
-        </h1>
-        <p className="mt-3 text-zinc-400">
-          {existingProfile ? s.ageSubtitle : s.subtitle}
-        </p>
-        {targetVenueName && (
-          <p className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-semibold text-yellow-100">
-            {s.tonightAt(targetVenueName)}
+    <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
+      <section className="night-content mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[1fr_28rem]">
+        <div className="hidden lg:block">
+          <p className="night-kicker">BarTap</p>
+          <h1 className="mt-5 max-w-xl text-6xl font-black leading-[0.95] tracking-normal">
+            {existingProfile ? s.ageTitle : s.title}
+          </h1>
+          <p className="mt-6 max-w-md text-lg leading-relaxed text-[#e7c7b4]">
+            {existingProfile ? s.ageSubtitle : s.subtitle}
           </p>
-        )}
+          <div className="mt-8 flex flex-wrap gap-3 text-sm font-semibold">
+            {s.trustPills.map((pill) => (
+              <span key={pill} className="night-pill rounded-full px-4 py-2">
+                {pill}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="night-panel w-full rounded-[2rem] p-6 sm:p-8">
+          <p className="night-kicker lg:hidden">BarTap</p>
+          <h1 className="mt-3 text-4xl font-black leading-tight tracking-normal lg:hidden">
+            {existingProfile ? s.ageTitle : s.title}
+          </h1>
+          <p className="mt-3 leading-relaxed text-[#d9bbb1] lg:hidden">
+            {existingProfile ? s.ageSubtitle : s.subtitle}
+          </p>
+          {targetVenueName && (
+            <p className="mt-4 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-4 py-3 text-sm font-semibold text-yellow-100">
+              {s.tonightAt(targetVenueName)}
+            </p>
+          )}
 
         {!existingProfile && (
           <>
             <div className="mt-8 flex justify-center">
               <label className="cursor-pointer">
-                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-zinc-500 bg-black/30 text-center text-sm text-zinc-400">
+                <div className="night-photo-ring flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border border-dashed border-[#f6b35a]/45 bg-black/35 text-center text-sm font-semibold text-[#e7c7b4] transition hover:border-[#ff6b9d]/70">
                   {previewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -227,31 +243,31 @@ export default function ProfilePage() {
             </div>
 
             <input
-              className="mt-8 w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
+              className="night-input mt-8 px-5 py-4"
               placeholder={s.firstName}
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
             />
 
             <textarea
-              className="mt-4 h-28 w-full resize-none rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400"
+              className="night-input mt-4 h-28 resize-none px-5 py-4"
               placeholder={s.bioOptional}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
             />
 
             <div className="mt-6">
-              <p className="text-sm text-zinc-400">{s.iAm}</p>
+              <p className="text-sm font-semibold text-[#d9bbb1]">{s.iAm}</p>
               <div className="mt-2 flex gap-2">
                 {GENDERS.map((g) => (
                   <button
                     key={g}
                     type="button"
                     onClick={() => setGender(g)}
-                    className={`flex-1 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${
+                    className={`night-button min-w-0 flex-1 px-3 py-3 text-sm ${
                       gender === g
-                        ? "border-yellow-400 bg-yellow-400 text-black"
-                        : "border-white/10 bg-black/40 text-zinc-300 hover:border-yellow-400"
+                        ? "night-button-primary"
+                        : "night-button-secondary"
                     }`}
                   >
                     {genderLabels[g]}
@@ -261,17 +277,19 @@ export default function ProfilePage() {
             </div>
 
             <div className="mt-6">
-              <p className="text-sm text-zinc-400">{s.iWantToMeet}</p>
+              <p className="text-sm font-semibold text-[#d9bbb1]">
+                {s.iWantToMeet}
+              </p>
               <div className="mt-2 flex gap-2">
                 {GENDERS.map((g) => (
                   <button
                     key={g}
                     type="button"
                     onClick={() => toggleInterest(g)}
-                    className={`flex-1 rounded-2xl border px-3 py-3 text-sm font-semibold transition ${
+                    className={`night-button min-w-0 flex-1 px-3 py-3 text-sm ${
                       interestedIn.includes(g)
-                        ? "border-yellow-400 bg-yellow-400 text-black"
-                        : "border-white/10 bg-black/40 text-zinc-300 hover:border-yellow-400"
+                        ? "night-button-primary"
+                        : "night-button-secondary"
                     }`}
                   >
                     {genderLabels[g]}
@@ -282,12 +300,12 @@ export default function ProfilePage() {
           </>
         )}
 
-        <label className="mt-6 flex items-start gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">
+        <label className="mt-6 flex items-start gap-3 rounded-2xl border border-white/10 bg-black/35 p-4 text-sm leading-relaxed text-[#d9bbb1]">
           <input
             type="checkbox"
             checked={adultConfirmed}
             onChange={(e) => setAdultConfirmed(e.target.checked)}
-            className="mt-1 h-4 w-4 accent-yellow-400"
+            className="mt-1 h-4 w-4 accent-[#f6b35a]"
           />
           <span>{s.adultConfirm}</span>
         </label>
@@ -295,15 +313,18 @@ export default function ProfilePage() {
         <button
           onClick={handleSaveProfile}
           disabled={saving}
-          className="mt-8 w-full rounded-2xl bg-yellow-400 px-5 py-4 font-bold text-black transition hover:bg-yellow-300 disabled:opacity-50"
+          className="night-button night-button-primary mt-8 w-full px-5 py-4 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saving ? s.saving : s.save}
         </button>
 
         {message && (
-          <p className="mt-4 text-center text-sm text-zinc-300">{message}</p>
+          <p className="mt-4 rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-center text-sm text-[#e7c7b4]">
+            {message}
+          </p>
         )}
       </div>
+      </section>
     </main>
   );
 }

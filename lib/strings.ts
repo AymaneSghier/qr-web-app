@@ -42,6 +42,7 @@ type Dict = {
     tonightAt: (venue: string) => string;
     ageTitle: string;
     ageSubtitle: string;
+    trustPills: string[];
     addPhoto: string;
     firstName: string;
     bioOptional: string;
@@ -67,7 +68,16 @@ type Dict = {
     // takes the venue name
     whosHere: (venue: string) => string;
     pitch: string;
+    hereForYou: (count: number) => string;
+    mutualCount: (count: number) => string;
+    discreetByDesign: string;
+    firstTimeHintTitle: string;
+    firstTimeHintBody: string;
+    firstTimeHintDismiss: string;
+    emptyTitle: string;
     empty: string;
+    emptyActionHint: string;
+    likeHint: string;
     like: string;
     liked: string;
     likeError: string;
@@ -86,6 +96,8 @@ type Dict = {
     chat: string;
     openChat: string;
     activeMatches: string;
+    conversationHint: string;
+    openConversation: (name: string) => string;
     block: string;
     blockConfirm: (name: string) => string;
     blockError: string;
@@ -117,6 +129,7 @@ type Dict = {
     backToRoom: string;
     expiresTonight: string;
     empty: string;
+    typing: (name: string) => string;
     placeholder: string;
     send: string;
     sendError: string;
@@ -127,25 +140,26 @@ type Dict = {
 export const t: Record<Locale, Dict> = {
   en: {
     landing: {
-      welcome: "Welcome to",
+      welcome: "Inside the room",
       tagline: "Scan. Tap. Start your night.",
-      settingUp: "Setting up your night…",
+      settingUp: "Opening the room…",
       sessionError:
         "Couldn't start your session. Anonymous sign-in may be disabled for this project.",
     },
     profile: {
-      title: "Set up your profile",
-      subtitle: "A real first name and photo, that's it.",
+      title: "Your profile is your vibe",
+      subtitle: "A real first name, a clear photo, and the energy you bring.",
       tonightAt: (venue) => `Tonight at ${venue}`,
       ageTitle: "Confirm your age",
-      ageSubtitle: "BarTap is for adults only.",
+      ageSubtitle: "Good energy only. BarTap is for adults.",
+      trustPills: ["Discreet taps", "Mutual only", "You stay in control"],
       addPhoto: "Add Photo",
       firstName: "First name",
       bioOptional: "Bio (optional)",
       iAm: "I am",
-      iWantToMeet: "I'd like to meet",
+      iWantToMeet: "I want to meet",
       adultConfirm: "I confirm that I am 18 or older.",
-      save: "Save profile",
+      save: "Enter the room",
       saving: "Saving…",
       sessionError: "Couldn't start your session. Try again.",
       needFirstName: "Please enter your first name.",
@@ -161,12 +175,23 @@ export const t: Record<Locale, Dict> = {
       entering: "Walking into the room…",
       loadError: "Couldn't load the room. Anonymous sign-in may be disabled.",
       venueNotFound: "This venue doesn't exist.",
-      whosHere: (venue) => `Who's at ${venue}`,
+      whosHere: (venue) => `Tonight at ${venue}`,
       pitch:
-        "Like discreetly. A chat only opens if it's mutual. No one ever knows you liked them unless they like you back.",
-      empty: "No one to show yet. Check back when the room fills up.",
-      like: "Like",
-      liked: "Liked",
+        "See who's here. Tap discreetly. A chat opens only when the energy is mutual.",
+      hereForYou: (count) => `${count} here for you`,
+      mutualCount: (count) => `${count} mutual`,
+      discreetByDesign: "Discreet by design",
+      firstTimeHintTitle: "Tap quietly",
+      firstTimeHintBody:
+        "They only know if it is mutual. You stay in control of your attention.",
+      firstTimeHintDismiss: "Got it",
+      emptyTitle: "You're in",
+      empty:
+        "The room is quiet for now. Stay visible while the night fills up.",
+      emptyActionHint: "You can still leave any time.",
+      likeHint: "Only revealed if it is mutual.",
+      like: "Tap",
+      liked: "Tapped",
       likeError: "Couldn't register your like. Try again.",
       leave: "Leave for the night",
       goInvisible: "Go invisible",
@@ -175,15 +200,17 @@ export const t: Record<Locale, Dict> = {
         "You're not visible in this room, and browsing is paused until you come back.",
       becomeVisible: "Become visible",
       visibilityError: "Couldn't update your visibility. Try again.",
-      matchKicker: "It's a match",
-      matchBody: "You both tapped. Go say hi, they're here tonight.",
-      matchDismiss: "Keep browsing",
+      matchKicker: "Mutual energy",
+      matchBody: "You both tapped. Keep it light, respectful, and in the moment.",
+      matchDismiss: "See who else is here",
       leftTitle: "You've left the room",
       leftBody: "You're no longer visible here. Come back whenever you like.",
       rejoin: "Re-join the room",
-      chat: "Chat",
-      openChat: "Open chat",
-      activeMatches: "Tonight's matches",
+      chat: "Open",
+      openChat: "Start the chat",
+      activeMatches: "Conversations",
+      conversationHint: "Mutual taps live here. Keep it warm, then say hi.",
+      openConversation: (name) => `Open conversation with ${name}`,
       block: "Block",
       blockConfirm: (name) =>
         `Block ${name}? You will no longer see each other, and any match or chat will close.`,
@@ -215,8 +242,9 @@ export const t: Record<Locale, Dict> = {
       loading: "Opening chat…",
       unavailable: "This chat is not available.",
       backToRoom: "Back to the room",
-      expiresTonight: "Open until the night ends.",
-      empty: "No messages yet. Keep it light and go say hi.",
+      expiresTonight: "Open for tonight.",
+      empty: "No messages yet. Keep it warm, short, and respectful.",
+      typing: (name) => `${name} is typing…`,
       placeholder: "Write a short message…",
       send: "Send",
       sendError: "Couldn't send your message. Try again.",
@@ -225,25 +253,30 @@ export const t: Record<Locale, Dict> = {
   },
   fr: {
     landing: {
-      welcome: "Bienvenue chez",
+      welcome: "Dans la salle",
       tagline: "Scanne. Tape. Commence ta soirée.",
-      settingUp: "On prépare ta soirée…",
+      settingUp: "On ouvre la salle…",
       sessionError:
         "Impossible de démarrer ta session. La connexion anonyme est peut-être désactivée.",
     },
     profile: {
-      title: "Crée ton profil",
-      subtitle: "Un vrai prénom et une photo, c'est tout.",
+      title: "Ton profil, ton énergie",
+      subtitle: "Un vrai prénom, une photo claire, et l'énergie que tu amènes.",
       tonightAt: (venue) => `Ce soir à ${venue}`,
       ageTitle: "Confirme ton âge",
-      ageSubtitle: "BarTap est réservé aux adultes.",
+      ageSubtitle: "Bonne énergie seulement. BarTap est réservé aux adultes.",
+      trustPills: [
+        "Taps discrets",
+        "Mutuel seulement",
+        "Tu gardes le contrôle",
+      ],
       addPhoto: "Ajouter une photo",
       firstName: "Prénom",
       bioOptional: "Bio (optionnel)",
       iAm: "Je suis",
       iWantToMeet: "Je veux rencontrer",
       adultConfirm: "Je confirme avoir 18 ans ou plus.",
-      save: "Enregistrer le profil",
+      save: "Entrer dans la salle",
       saving: "Enregistrement…",
       sessionError: "Impossible de démarrer ta session. Réessaie.",
       needFirstName: "Entre ton prénom.",
@@ -260,12 +293,23 @@ export const t: Record<Locale, Dict> = {
       loadError:
         "Impossible de charger la salle. La connexion anonyme est peut-être désactivée.",
       venueNotFound: "Ce lieu n'existe pas.",
-      whosHere: (venue) => `Qui est à ${venue}`,
+      whosHere: (venue) => `Ce soir à ${venue}`,
       pitch:
-        "Like en toute discrétion. Un chat ne s'ouvre que si c'est réciproque. Personne ne saura jamais que tu l'as liké tant qu'il ne te like pas en retour.",
-      empty: "Personne pour l'instant. Reviens quand la salle se remplit.",
-      like: "Like",
-      liked: "Liké",
+        "Vois qui est là. Tape discrètement. Le chat s'ouvre seulement si l'énergie est mutuelle.",
+      hereForYou: (count) => `${count} pour toi`,
+      mutualCount: (count) => `${count} mutuel${count > 1 ? "s" : ""}`,
+      discreetByDesign: "Discret par design",
+      firstTimeHintTitle: "Tape discrètement",
+      firstTimeHintBody:
+        "La personne ne le sait que si c'est mutuel. Tu gardes le contrôle de ton attention.",
+      firstTimeHintDismiss: "Compris",
+      emptyTitle: "Tu es dedans",
+      empty:
+        "La salle est calme pour l'instant. Reste visible pendant que la soirée se remplit.",
+      emptyActionHint: "Tu peux toujours quitter quand tu veux.",
+      likeHint: "Révélé seulement si c'est mutuel.",
+      like: "Taper",
+      liked: "Tapé",
       likeError: "Impossible d'enregistrer ton like. Réessaie.",
       leave: "Quitter la soirée",
       goInvisible: "Passer invisible",
@@ -274,15 +318,19 @@ export const t: Record<Locale, Dict> = {
         "Tu n'apparais plus dans cette salle, et l'exploration est en pause jusqu'à ton retour.",
       becomeVisible: "Redevenir visible",
       visibilityError: "Impossible de changer ta visibilité. Réessaie.",
-      matchKicker: "C'est un match",
-      matchBody: "Vous vous êtes likés. Va lui dire bonjour, il est là ce soir.",
-      matchDismiss: "Continuer à explorer",
+      matchKicker: "Énergie mutuelle",
+      matchBody:
+        "Vous avez tous les deux tapé. Reste léger, respectueux, et dans le moment.",
+      matchDismiss: "Voir qui est là",
       leftTitle: "Tu as quitté la salle",
       leftBody: "Tu n'es plus visible ici. Reviens quand tu veux.",
       rejoin: "Revenir dans la salle",
-      chat: "Chat",
-      openChat: "Ouvrir le chat",
-      activeMatches: "Matches de ce soir",
+      chat: "Ouvrir",
+      openChat: "Démarrer le chat",
+      activeMatches: "Conversations",
+      conversationHint:
+        "Les taps mutuels vivent ici. Reste chaleureux, puis va dire bonjour.",
+      openConversation: (name) => `Ouvrir la conversation avec ${name}`,
       block: "Bloquer",
       blockConfirm: (name) =>
         `Bloquer ${name} ? Vous ne vous verrez plus, et tout match ou chat sera fermé.`,
@@ -314,8 +362,9 @@ export const t: Record<Locale, Dict> = {
       loading: "Ouverture du chat…",
       unavailable: "Ce chat n'est pas disponible.",
       backToRoom: "Retour à la salle",
-      expiresTonight: "Ouvert jusqu'à la fin de la soirée.",
-      empty: "Aucun message pour l'instant. Reste simple et va lui dire bonjour.",
+      expiresTonight: "Ouvert pour ce soir.",
+      empty: "Aucun message pour l'instant. Reste chaleureux, court et respectueux.",
+      typing: (name) => `${name} écrit…`,
       placeholder: "Écris un message court…",
       send: "Envoyer",
       sendError: "Impossible d'envoyer ton message. Réessaie.",
