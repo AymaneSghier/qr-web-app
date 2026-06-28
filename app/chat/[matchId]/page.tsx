@@ -49,7 +49,7 @@ type TypingPayload = {
 const TYPING_IDLE_MS = 1_600;
 
 function readMarkerKey(matchId: string) {
-  return `bartap-chat-read:${matchId}`;
+  return `paramour-chat-read:${matchId}`;
 }
 
 function markConversationRead(matchId: string, messages: Message[]) {

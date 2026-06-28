@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BarTap",
+  title: "Paramour",
   description: "See who's in the bar tonight. Like discreetly, match if it's mutual.",
 };
 

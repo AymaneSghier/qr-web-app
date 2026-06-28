@@ -4,6 +4,9 @@
 -- the real Phase 1 venues later.
 
 insert into public.venues (slug, name, city, timezone) values
-  ('paris-test', 'Bartap Test (Paris)', 'Paris',    'Europe/Paris'),
-  ('nyc-test',   'Bartap Test (NYC)',   'New York', 'America/New_York')
-on conflict (slug) do nothing;
+  ('paris-test', 'Paramour Test (Paris)', 'Paris',    'Europe/Paris'),
+  ('nyc-test',   'Paramour Test (NYC)',   'New York', 'America/New_York')
+on conflict (slug) do update set
+  name = excluded.name,
+  city = excluded.city,
+  timezone = excluded.timezone;

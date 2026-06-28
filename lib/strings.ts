@@ -2,7 +2,7 @@
 // No i18n framework yet: the app is a handful of screens, so a single typed
 // dictionary is the cheap insurance that a later switch is a one-file change,
 // not a hunt across components. Code stays English; only displayed strings live
-// here. The brand name "BarTap" is never localized and stays inline in the UI.
+// here. The brand name "Paramour" is never localized and stays inline in the UI.
 //
 // Locale is derived from the venue's city inside a room (Paris -> fr, NYC -> en)
 // and from the browser language on the pre-venue pages (landing, profile).
@@ -155,7 +155,7 @@ export const t: Record<Locale, Dict> = {
       subtitle: "A real first name, a clear photo, and the energy you bring.",
       tonightAt: (venue) => `Tonight at ${venue}`,
       ageTitle: "Confirm your age",
-      ageSubtitle: "Good energy only. BarTap is for adults.",
+      ageSubtitle: "Good energy only. Paramour is for adults.",
       trustPills: ["Discreet taps", "Mutual only", "You stay in control"],
       addPhoto: "Add Photo",
       firstName: "First name",
@@ -235,7 +235,7 @@ export const t: Record<Locale, Dict> = {
       reportBlockPrompt: "Do you also want to block this person?",
       promoTitle: "You've started",
       promoBody:
-        "You just made your first move. Keep BarTap in your pocket for the next one.",
+        "You just made your first move. Keep Paramour in your pocket for the next one.",
       promoPrimary: "Download on the App Store",
       promoSecondary: "Get it on Google Play",
       promoDismiss: "Not now",
@@ -273,7 +273,7 @@ export const t: Record<Locale, Dict> = {
       subtitle: "Un vrai prénom, une photo claire, et l'énergie que tu amènes.",
       tonightAt: (venue) => `Ce soir à ${venue}`,
       ageTitle: "Confirme ton âge",
-      ageSubtitle: "Bonne énergie seulement. BarTap est réservé aux adultes.",
+      ageSubtitle: "Bonne énergie seulement. Paramour est réservé aux adultes.",
       trustPills: [
         "Taps discrets",
         "Mutuel seulement",
@@ -360,7 +360,7 @@ export const t: Record<Locale, Dict> = {
       reportBlockPrompt: "Veux-tu aussi bloquer cette personne ?",
       promoTitle: "Tu as commencé",
       promoBody:
-        "Tu viens de faire ton premier pas. Garde BarTap dans ta poche pour le suivant.",
+        "Tu viens de faire ton premier pas. Garde Paramour dans ta poche pour le suivant.",
       promoPrimary: "Télécharger sur l'App Store",
       promoSecondary: "Disponible sur Google Play",
       promoDismiss: "Plus tard",

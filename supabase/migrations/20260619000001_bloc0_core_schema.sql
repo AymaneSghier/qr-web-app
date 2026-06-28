@@ -1,4 +1,4 @@
--- Bloc 0 — Foundations: core data model for Bartap.
+-- Bloc 0 — Foundations: core data model for Paramour.
 -- Persistent identity (profiles), ephemeral everything else (presence, likes, matches, messages).
 -- See docs/decisions.md (2026-06-19) for the rationale behind each choice.
 --

@@ -67,7 +67,7 @@ export default function Home() {
         <div className="max-w-2xl">
           <p className="night-kicker">{s.welcome}</p>
           <h1 className="mt-4 text-6xl font-black leading-[0.9] tracking-normal text-white sm:text-8xl">
-            BarTap
+            Paramour
           </h1>
           <p className="mt-6 max-w-sm text-xl font-medium leading-relaxed text-[#f9d7c4] sm:text-2xl">
             {s.tagline}

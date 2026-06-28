@@ -4,9 +4,9 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# Bartap
+# Paramour
 
-Live, in-bar dating app. Codename "Bartap", final name TBD. Co-founded by Aymane (New York) and Marwane (Paris). Both founders code, with both Claude Code and Codex.
+Live, in-bar dating app. Co-founded by Aymane (New York) and Marwane (Paris). Both founders code, with both Claude Code and Codex.
 
 **North star (internal compass):** *Turn the fear of rejection into a painless match, right where people already are: the bar.*
 
@@ -21,7 +21,7 @@ This file is the single source of truth for any agent. Codex reads `AGENTS.md` n
 - **`AGENTS.md`** (this file): the durable engineering contract. Rarely changes.
 - **`docs/roadmap.md`**: current state and the phased plan. The living status doc, updated as work ships.
 - **`docs/decisions.md`**: append-only log of architecture and collaboration decisions, shared between both founders.
-- **Google Doc `Bartap - Vision & Strategy`**: full product vision and strategy.
+- **Google Doc `Paramour - Vision & Strategy`**: full product vision and strategy.
 - **Code + git history**: the actual truth of what is built. Docs are the human-readable layer on top.
 
 **This is a living set of docs.** If during any work session you spot something wrong, a missing convention, a gotcha, or a decision worth recording, update the right file on the spot (a convention goes here, a status change in `docs/roadmap.md`, a decision in `docs/decisions.md`). Do not leave it for a separate cleanup pass.

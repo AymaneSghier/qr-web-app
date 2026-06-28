@@ -51,13 +51,13 @@ type ReportReason = (typeof REPORT_REASONS)[number];
 // timer (the room lasts the night, closed by the rollover cron) — the heartbeat
 // just keeps last_seen_at fresh while the tab is open.
 const HEARTBEAT_MS = 120_000;
-const PROMO_DISMISS_KEY = "bartap-promo-dismissed";
-const ROOM_HINT_DISMISS_KEY = "bartap-room-hint-dismissed";
+const PROMO_DISMISS_KEY = "paramour-promo-dismissed";
+const ROOM_HINT_DISMISS_KEY = "paramour-room-hint-dismissed";
 
 type Status = "loading" | "ready" | "error" | "left" | "invisible";
 
 function readMarkerKey(matchId: string) {
-  return `bartap-chat-read:${matchId}`;
+  return `paramour-chat-read:${matchId}`;
 }
 
 function getReadMarker(matchId: string) {
@@ -599,7 +599,7 @@ export default function VenueRoom() {
     return (
       <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
         <div className="night-content mx-auto max-w-3xl">
-          <p className="night-kicker">BarTap</p>
+          <p className="night-kicker">Paramour</p>
           <h1 className="mt-4 text-5xl font-black leading-tight tracking-normal">
             {s.invisibleTitle}
           </h1>
@@ -673,7 +673,7 @@ export default function VenueRoom() {
       <div className="night-content mx-auto max-w-6xl">
         <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="night-kicker">BarTap</p>
+            <p className="night-kicker">Paramour</p>
             <h1 className="mt-4 text-5xl font-black leading-[0.95] tracking-normal sm:text-6xl">
               {s.whosHere(venue?.name ?? "")}
             </h1>
@@ -792,7 +792,7 @@ export default function VenueRoom() {
 
         {visible.length === 0 ? (
           <div className="night-panel mt-12 rounded-[2rem] p-8 text-center">
-            <p className="night-kicker">BarTap</p>
+            <p className="night-kicker">Paramour</p>
             <h2 className="mt-3 text-3xl font-black">{s.emptyTitle}</h2>
             <p className="night-muted mx-auto mt-3 max-w-md leading-relaxed">
               {s.empty}
@@ -986,7 +986,7 @@ export default function VenueRoom() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 px-6 backdrop-blur">
           <div className="w-full max-w-md rounded-3xl border border-yellow-400/30 bg-zinc-950 p-7 shadow-2xl">
             <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
-              BarTap
+              Paramour
             </p>
             <h2 className="mt-3 text-3xl font-black">{s.promoTitle}</h2>
             <p className="mt-3 text-zinc-300">{s.promoBody}</p>
@@ -1026,7 +1026,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="night-shell flex min-h-screen items-center justify-center px-6 text-white">
       <div className="night-content night-panel w-full max-w-md rounded-[2rem] p-8 text-center">
-        <p className="night-kicker">BarTap</p>
+        <p className="night-kicker">Paramour</p>
         <div className="mt-6">{children}</div>
       </div>
     </main>

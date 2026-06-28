@@ -218,7 +218,7 @@ export default function ProfilePage() {
     <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
       <section className="night-content mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[1fr_28rem]">
         <div className="hidden lg:block">
-          <p className="night-kicker">BarTap</p>
+          <p className="night-kicker">Paramour</p>
           <h1 className="mt-5 max-w-xl text-6xl font-black leading-[0.95] tracking-normal">
             {existingProfile ? s.ageTitle : s.title}
           </h1>
@@ -240,7 +240,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="night-panel w-full rounded-[2rem] p-6 sm:p-8">
-          <p className="night-kicker lg:hidden">BarTap</p>
+          <p className="night-kicker lg:hidden">Paramour</p>
           <h1 className="mt-3 text-4xl font-black leading-tight tracking-normal lg:hidden">
             {existingProfile ? s.ageTitle : s.title}
           </h1>
