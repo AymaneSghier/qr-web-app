@@ -43,3 +43,4 @@ Append-only log of architecture and collaboration decisions, shared between both
 ## 2026-06-28
 
 - **The product name is Paramour.** User-facing app copy and durable product docs use Paramour as the brand name. Existing database object names that include the previous codename remain unchanged unless a migration explicitly renames them. *Why:* the public product needs one consistent name, while already-applied database identifiers should not be rewritten casually.
+- **Language is user-selectable across EN/FR/ES.** Venue city and browser language remain the default, but an explicit language choice is stored locally and overrides those defaults across landing, profile, room, and chat. *Why:* test crowds may not match the venue default, and the control should be immediate without account settings or a heavier i18n framework.

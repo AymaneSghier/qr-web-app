@@ -7,7 +7,12 @@ import { ensureAnonSession } from "@/lib/auth";
 import type { Database } from "@/lib/database.types";
 import { browserLocale, localeForCity, t } from "@/lib/strings";
 import { supabase } from "@/lib/supabase";
-import { useBrowserLocale } from "@/lib/useLocale";
+import {
+  preferredLocale,
+  useBrowserLocale,
+  usePreferredLocale,
+} from "@/lib/useLocale";
+import { LanguageSelector } from "@/app/LanguageSelector";
 
 type PublicProfile = Pick<
   Database["public"]["Tables"]["profiles"]["Row"],
@@ -93,7 +98,9 @@ export default function MatchChatPage() {
   const typingStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const otherTypingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const locale = match ? localeForCity(match.venue.city) : browserLoc;
+  const locale = usePreferredLocale(
+    match ? localeForCity(match.venue.city) : browserLoc
+  );
   const s = t[locale].chat;
   const roomS = t[locale].room;
   const timeFormatter = new Intl.DateTimeFormat(locale, {
@@ -126,7 +133,7 @@ export default function MatchChatPage() {
         if (!active) return;
         if (!myProfile) {
           setStatus("error");
-          setErrorMsg(t[browserLocale()].chat.unavailable);
+          setErrorMsg(t[preferredLocale(browserLocale())].chat.unavailable);
           return;
         }
         setMe(myProfile as PublicProfile);
@@ -142,7 +149,7 @@ export default function MatchChatPage() {
         if (!active) return;
         if (!matchRow) {
           setStatus("error");
-          setErrorMsg(t[browserLocale()].chat.unavailable);
+          setErrorMsg(t[preferredLocale(browserLocale())].chat.unavailable);
           return;
         }
 
@@ -185,7 +192,7 @@ export default function MatchChatPage() {
         if (!active) return;
         if (!otherProfile) {
           setStatus("error");
-          setErrorMsg(t[browserLocale()].chat.unavailable);
+          setErrorMsg(t[preferredLocale(browserLocale())].chat.unavailable);
           return;
         }
 
@@ -197,7 +204,7 @@ export default function MatchChatPage() {
         console.error(e);
         if (active) {
           setStatus("error");
-          setErrorMsg(t[browserLocale()].chat.unavailable);
+          setErrorMsg(t[preferredLocale(browserLocale())].chat.unavailable);
         }
       }
     })();
@@ -416,7 +423,8 @@ export default function MatchChatPage() {
             <h1 className="truncate text-xl font-black">{other.first_name}</h1>
             <p className="truncate text-sm text-[#d9bbb1]">{s.expiresTonight}</p>
           </div>
-          <div className="ml-auto flex shrink-0 gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <LanguageSelector />
             <button
               onClick={openReport}
               className="night-button night-button-secondary rounded-full px-3 py-2 text-sm"
@@ -597,6 +605,9 @@ function Shell({
 }) {
   return (
     <main className="night-shell flex min-h-screen items-center justify-center px-6 text-white">
+      <div className="fixed right-5 top-5 z-20">
+        <LanguageSelector />
+      </div>
       <div
         className={`night-content night-panel w-full max-w-md rounded-[2rem] p-8 text-center text-sm ${
           tone === "error" ? "text-red-300" : "night-muted"

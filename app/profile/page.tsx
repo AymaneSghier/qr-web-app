@@ -7,7 +7,8 @@ import { ensureAnonSession } from "@/lib/auth";
 import { DEV_DEFAULT_VENUE_SLUG } from "@/lib/config";
 import { GENDERS, type Gender } from "@/lib/profile";
 import { browserLocale, t } from "@/lib/strings";
-import { useBrowserLocale } from "@/lib/useLocale";
+import { preferredLocale, useBrowserLocale } from "@/lib/useLocale";
+import { LanguageSelector } from "@/app/LanguageSelector";
 
 const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PROFILE_PHOTO_TYPES = new Set([
@@ -91,7 +92,9 @@ export default function ProfilePage() {
         }
       } catch (e) {
         console.error(e);
-        if (active) setMessage(t[browserLocale()].profile.sessionError);
+        if (active) {
+          setMessage(t[preferredLocale(browserLocale())].profile.sessionError);
+        }
       }
     })();
     return () => {
@@ -216,6 +219,9 @@ export default function ProfilePage() {
 
   return (
     <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
+      <div className="fixed right-5 top-5 z-20">
+        <LanguageSelector />
+      </div>
       <section className="night-content mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[1fr_28rem]">
         <div className="hidden lg:block">
           <p className="night-kicker">Paramour</p>

@@ -6,7 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { ensureAnonSession } from "@/lib/auth";
 import { DEV_DEFAULT_VENUE_SLUG } from "@/lib/config";
 import { browserLocale, t } from "@/lib/strings";
-import { useBrowserLocale } from "@/lib/useLocale";
+import { preferredLocale, useBrowserLocale } from "@/lib/useLocale";
+import { LanguageSelector } from "@/app/LanguageSelector";
 
 export default function Home() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function Home() {
       } catch (e) {
         console.error(e);
         if (active) {
-          setError(t[browserLocale()].landing.sessionError);
+          setError(t[preferredLocale(browserLocale())].landing.sessionError);
         }
       }
     })();
@@ -63,6 +64,9 @@ export default function Home() {
 
   return (
     <main className="night-shell flex min-h-screen items-end px-6 py-10 sm:items-center">
+      <div className="fixed right-5 top-5 z-20">
+        <LanguageSelector />
+      </div>
       <section className="night-content mx-auto w-full max-w-5xl">
         <div className="max-w-2xl">
           <p className="night-kicker">{s.welcome}</p>

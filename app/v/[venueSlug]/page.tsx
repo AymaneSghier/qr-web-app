@@ -8,7 +8,12 @@ import { ensureAnonSession } from "@/lib/auth";
 import { APP_STORE_URL, GOOGLE_PLAY_URL } from "@/lib/config";
 import { isMutuallyCompatible } from "@/lib/profile";
 import { browserLocale, localeForCity, t } from "@/lib/strings";
-import { useBrowserLocale } from "@/lib/useLocale";
+import {
+  preferredLocale,
+  useBrowserLocale,
+  usePreferredLocale,
+} from "@/lib/useLocale";
+import { LanguageSelector } from "@/app/LanguageSelector";
 import type { Database } from "@/lib/database.types";
 
 // Public-facing profile: only the columns other users are ever allowed to see.
@@ -112,7 +117,10 @@ export default function VenueRoom() {
   // hard errors) we fall back to the browser language (resolved after mount to
   // avoid an SSR hydration mismatch on the loading screen).
   const browserLoc = useBrowserLocale();
-  const s = t[venue ? localeForCity(venue.city) : browserLoc].room;
+  const locale = usePreferredLocale(
+    venue ? localeForCity(venue.city) : browserLoc
+  );
+  const s = t[locale].room;
 
   // Keep the latest "me" available to realtime callbacks without resubscribing.
   const meRef = useRef<PublicProfile | null>(null);
@@ -195,7 +203,9 @@ export default function VenueRoom() {
         if (!active) return;
         if (!venueRow) {
           setStatus("error");
-          setErrorMsg(t[browserLocale()].room.venueNotFound);
+          setErrorMsg(
+            t[preferredLocale(browserLocale())].room.venueNotFound
+          );
           return;
         }
 
@@ -279,7 +289,7 @@ export default function VenueRoom() {
         console.error(e);
         if (active) {
           setStatus("error");
-          setErrorMsg(t[browserLocale()].room.loadError);
+          setErrorMsg(t[preferredLocale(browserLocale())].room.loadError);
         }
       }
     })();
@@ -598,6 +608,9 @@ export default function VenueRoom() {
   if (status === "invisible") {
     return (
       <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
+        <div className="fixed right-5 top-5 z-20">
+          <LanguageSelector />
+        </div>
         <div className="night-content mx-auto max-w-3xl">
           <p className="night-kicker">Paramour</p>
           <h1 className="mt-4 text-5xl font-black leading-tight tracking-normal">
@@ -670,6 +683,9 @@ export default function VenueRoom() {
 
   return (
     <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
+      <div className="fixed right-5 top-5 z-20">
+        <LanguageSelector />
+      </div>
       <div className="night-content mx-auto max-w-6xl">
         <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>
@@ -1025,6 +1041,9 @@ export default function VenueRoom() {
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="night-shell flex min-h-screen items-center justify-center px-6 text-white">
+      <div className="fixed right-5 top-5 z-20">
+        <LanguageSelector />
+      </div>
       <div className="night-content night-panel w-full max-w-md rounded-[2rem] p-8 text-center">
         <p className="night-kicker">Paramour</p>
         <div className="mt-6">{children}</div>

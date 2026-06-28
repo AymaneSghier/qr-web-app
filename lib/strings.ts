@@ -1,13 +1,19 @@
-// Lightweight FR/EN UI dictionary (see docs/decisions.md, 2026-06-19).
+// Lightweight FR/EN/ES UI dictionary (see docs/decisions.md, 2026-06-19).
 // No i18n framework yet: the app is a handful of screens, so a single typed
 // dictionary is the cheap insurance that a later switch is a one-file change,
 // not a hunt across components. Code stays English; only displayed strings live
 // here. The brand name "Paramour" is never localized and stays inline in the UI.
 //
-// Locale is derived from the venue's city inside a room (Paris -> fr, NYC -> en)
-// and from the browser language on the pre-venue pages (landing, profile).
+// Locale defaults to the venue's city inside a room (Paris -> fr, NYC -> en)
+// and to the browser language on the pre-venue pages (landing, profile). A
+// user-selected language can override either default.
 
-export type Locale = "fr" | "en";
+export const SUPPORTED_LOCALES = ["en", "fr", "es"] as const;
+export type Locale = (typeof SUPPORTED_LOCALES)[number];
+
+export function isLocale(value: string | null | undefined): value is Locale {
+  return SUPPORTED_LOCALES.some((locale) => locale === value);
+}
 
 // Cities whose room is shown in French. Extend as venues grow; everything else
 // defaults to English.
@@ -20,11 +26,14 @@ export function localeForCity(city: string | null | undefined): Locale {
 
 // Browser-language fallback for pages reached before a venue is known.
 export function browserLocale(): Locale {
-  if (
-    typeof navigator !== "undefined" &&
-    navigator.language?.toLowerCase().startsWith("fr")
-  ) {
+  const language = typeof navigator !== "undefined"
+    ? navigator.language?.toLowerCase()
+    : "";
+  if (language?.startsWith("fr")) {
     return "fr";
+  }
+  if (language?.startsWith("es")) {
+    return "es";
   }
   return "en";
 }
@@ -383,6 +392,127 @@ export const t: Record<Locale, Dict> = {
       send: "Envoyer",
       sendError: "Impossible d'envoyer ton message. Réessaie.",
       closed: "Ce match a expiré pour la soirée.",
+    },
+  },
+  es: {
+    landing: {
+      welcome: "Dentro de la sala",
+      tagline: "Escanea. Toca. Empieza tu noche.",
+      settingUp: "Abriendo la sala…",
+      sessionError:
+        "No se pudo iniciar tu sesión. Puede que el inicio anónimo esté desactivado.",
+    },
+    profile: {
+      title: "Tu perfil es tu vibra",
+      subtitle: "Un nombre real, una foto clara y la energía que traes.",
+      tonightAt: (venue) => `Esta noche en ${venue}`,
+      ageTitle: "Confirma tu edad",
+      ageSubtitle: "Solo buena energía. Paramour es para adultos.",
+      trustPills: ["Toques discretos", "Solo mutuo", "Tú tienes el control"],
+      addPhoto: "Añadir foto",
+      firstName: "Nombre",
+      bioOptional: "Bio (opcional)",
+      iAm: "Soy",
+      iWantToMeet: "Quiero conocer",
+      adultConfirm: "Confirmo que tengo 18 años o más.",
+      save: "Entrar en la sala",
+      saving: "Guardando…",
+      sessionError: "No se pudo iniciar tu sesión. Inténtalo de nuevo.",
+      needFirstName: "Introduce tu nombre.",
+      needPhoto: "Añade una foto de perfil.",
+      needGender: "Selecciona tu género.",
+      needInterest: "Selecciona a quién quieres conocer.",
+      needAdult: "Confirma que tienes 18 años o más.",
+      photoInvalidType: "Usa una foto JPG, PNG o WebP.",
+      photoTooLarge: "Usa una foto de menos de 5 MB.",
+      photoRejected:
+        "Usa una foto real y clara de tu cara. Sin imágenes vacías, memes, capturas, fotos de grupo ni caras ocultas.",
+      photoReviewFailed: "No se pudo revisar tu foto. Inténtalo de nuevo.",
+      photoUploadFailed: "La subida de la foto falló.",
+      genericError: "Algo salió mal. Inténtalo de nuevo.",
+    },
+    genders: { woman: "Mujer", man: "Hombre", nonbinary: "No binario" },
+    room: {
+      entering: "Entrando en la sala…",
+      loadError:
+        "No se pudo cargar la sala. Puede que el inicio anónimo esté desactivado.",
+      venueNotFound: "Este lugar no existe.",
+      whosHere: (venue) => `Esta noche en ${venue}`,
+      pitch:
+        "Mira quién está aquí. Toca discretamente. El chat se abre solo si la energía es mutua.",
+      hereForYou: (count) => `${count} para ti`,
+      mutualCount: (count) => `${count} mutuo${count > 1 ? "s" : ""}`,
+      discreetByDesign: "Discreto por diseño",
+      firstTimeHintTitle: "Toca discretamente",
+      firstTimeHintBody:
+        "Solo lo sabrán si es mutuo. Tú controlas tu atención.",
+      firstTimeHintDismiss: "Entendido",
+      emptyTitle: "Ya estás dentro",
+      empty:
+        "La sala está tranquila por ahora. Mantente visible mientras se llena la noche.",
+      emptyActionHint: "Puedes salir cuando quieras.",
+      likeHint: "Solo se revela si es mutuo.",
+      like: "Tocar",
+      liked: "Tocado",
+      likeError: "No se pudo registrar tu toque. Inténtalo de nuevo.",
+      leave: "Salir por esta noche",
+      goInvisible: "Pasar a invisible",
+      invisibleTitle: "Estás invisible",
+      invisibleBody:
+        "No eres visible en esta sala y la exploración se pausa hasta que vuelvas.",
+      becomeVisible: "Volver a ser visible",
+      visibilityError: "No se pudo cambiar tu visibilidad. Inténtalo de nuevo.",
+      matchKicker: "Energía mutua",
+      matchBody:
+        "Ambos se tocaron. Manténlo ligero, respetuoso y en el momento.",
+      matchDismiss: "Ver quién más está aquí",
+      leftTitle: "Has salido de la sala",
+      leftBody: "Ya no eres visible aquí. Vuelve cuando quieras.",
+      rejoin: "Volver a la sala",
+      chat: "Abrir",
+      openChat: "Iniciar el chat",
+      activeMatches: "Conversaciones",
+      conversationHint:
+        "Los toques mutuos viven aquí. Manténlo cálido y luego ve a saludar.",
+      openConversation: (name) => `Abrir conversación con ${name}`,
+      block: "Bloquear",
+      blockConfirm: (name) =>
+        `¿Bloquear a ${name}? Ya no se verán, y cualquier match o chat se cerrará.`,
+      blockError: "No se pudo bloquear a esta persona. Inténtalo de nuevo.",
+      report: "Reportar",
+      reportTitle: (name) => `Reportar a ${name}`,
+      reportReason: "Razón",
+      reportNote: "Añadir una nota (opcional)",
+      reportSubmit: "Enviar reporte",
+      reportCancel: "Cancelar",
+      reportSuccess: "Reporte enviado.",
+      reportError: "No se pudo enviar el reporte. Inténtalo de nuevo.",
+      reportBlockPrompt: "¿También quieres bloquear a esta persona?",
+      promoTitle: "Has empezado",
+      promoBody:
+        "Acabas de dar tu primer paso. Lleva Paramour en el bolsillo para el siguiente.",
+      promoPrimary: "Descargar en App Store",
+      promoSecondary: "Disponible en Google Play",
+      promoDismiss: "Ahora no",
+      reportReasons: {
+        harassment: "Acoso",
+        fake_profile: "Perfil falso",
+        underage: "Menor de edad",
+        unsafe_behavior: "Comportamiento inseguro",
+        other: "Otro",
+      },
+    },
+    chat: {
+      loading: "Abriendo el chat…",
+      unavailable: "Este chat no está disponible.",
+      backToRoom: "Volver a la sala",
+      expiresTonight: "Abierto por esta noche.",
+      empty: "Aún no hay mensajes. Manténlo cálido, corto y respetuoso.",
+      typing: (name) => `${name} está escribiendo…`,
+      placeholder: "Escribe un mensaje corto…",
+      send: "Enviar",
+      sendError: "No se pudo enviar tu mensaje. Inténtalo de nuevo.",
+      closed: "Este match ha expirado por la noche.",
     },
   },
 };
