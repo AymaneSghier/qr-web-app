@@ -20,7 +20,7 @@ Bloc 0 (foundations), Bloc 2 (discreet like/match), Bloc 1 (QR check-in + live p
 **Known gaps and debt (addressed during Phase 1):**
 - Bloc 3 review follow-up before real testing: **done** — likes now carry `expires_at`, likes and matches are unique per venue night, reciprocal matching requires same-night likes, and the existing night-rollover cron deletes expired likes with expired matches.
 - Bloc 3 review follow-up before real testing: message sends are now blocked by message RLS as soon as `matches.expires_at` has passed. The chat UI still treats expired matches as closed.
-- Bloc 4 is v1 safety only: no admin moderation console, no external age verification, no unblock UI yet.
+- Bloc 4 is v1 safety only: no external age verification, no unblock UI yet. The admin moderation console shipped as Bloc 6 (see below): reports and blocks are now visible and actionable by the founders at `/admin`.
 - Real QR generation and a real venue are Bloc 5; the room is reachable today via the seeded `paris-test` / `nyc-test` slugs and the dev default redirect.
 
 ## Phase 1: prove the spark
@@ -41,6 +41,7 @@ Goal: prove people actually like and match when in the same room, at one recurri
 - **Bloc 3, Chat gated by match** (done, with one review follow-up before real testing): chat opens only from an active match row (`/chat/[matchId]`), messages are realtime and structurally tied to `match_id`, and `matches.expires_at` makes match/chat cleanup part of the existing 06:00-local cron. Follow-up: expire/night-scope likes together with matches.
 - **Bloc 4, Safety / women first** (done): mandatory 18+ checkbox, balanced invisible mode, report with reason + optional note, and strong block. Block hides both users from each other and closes existing likes/matches/chats; invisible hides the user and pauses browsing/liking without closing existing matches.
 - **Bloc 5, First scrappy test**: deploy (Vercel), generate a venue QR, test on a real night even among friends.
+- **Bloc 6, Admin dashboard (founder-only)** (done): a `/admin` route in the existing app, gated by an `admins` allow-list + RLS and real email/password login for the two founders (public users stay anonymous). Three surfaces, by priority: (1) **moderation** — a reports/blocks queue the founders can finally see and act on (reports no longer land nowhere), the women-first gap flagged in Bloc 4; (2) **venue ops** — list/create venues, show/download each venue QR (via the `qrcode` dep), and a live start/stop switch backed by the new `venues.is_live` flag (`check_in()` refuses when a venue is not live, closing the off-hours-reconnect hole; the 06:00 cron stays the cleanup safety net and self-closes forgotten venues); (3) **aggregate stats** — per-night/per-venue check-ins, likes sent, matches, chats started, **aggregate-only, never who-liked/matched-whom** (served by a counts-only `SECURITY DEFINER` RPC, so founders have no raw read of likes/matches). Access is enforced by RLS via a `private.is_admin()` helper; the service-role never reaches client code. The `is_live` behavioral migration was applied to the shared DB (announced to Aymane). Admin UI is English-only internal tooling. See `docs/decisions.md` (2026-07-01).
 
 This file is the shared, founder-visible plan. Each founder tracks their own granular tasks in their own tool.
 
