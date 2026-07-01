@@ -24,6 +24,10 @@ create or replace function public.admin_night_stats()
   security definer
   set search_path = public, private
 as $$
+-- The RETURNS TABLE out-params (venue_id, night, …) share names with columns in
+-- the CTEs below; resolve any collision in favour of the column (RETURN QUERY
+-- fills the out-params positionally regardless).
+#variable_conflict use_column
 begin
   if not private.is_admin() then
     raise exception 'not authorized';
