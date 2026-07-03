@@ -4,10 +4,11 @@ Living design reference. Updated as the visual identity is decided. Pairs with
 `docs/decisions.md` (the *why* of each choice) and `docs/brand/board.html` (the
 visual board).
 
-> Status: **DA v3 — three complete directions on the board, one firm
-> recommendation (Direction A), awaiting founder sign-off on which direction
-> ships.** The brand *name* is locked. Once a direction is signed, the token
-> table below is final and ready to wire into Tailwind.
+> Status: **DA locked (2026-07-03) — Direction A "Rouge Signature", hybrid
+> red usage, signed by Marwane.** The brand name and the visual system are
+> both final: the token table below is the reference, ready to wire into
+> Tailwind. Directions B and C remain on the board as the record of what was
+> considered and why A won.
 
 ## Brand name — Amourette (locked 2026-07-01)
 
@@ -68,14 +69,14 @@ All three palettes pass WCAG contrast (measured, see board).
 | Ownable | Strong (no dating app owns couture red) | Weak (premium-dark is saturated) | Weak (pink = generic dating code) |
 | Women-first risk | Low if red discipline holds | Lowest | Highest (neon slides to sleazy) |
 
-**Recommendation: Direction A — Rouge Signature, "hybrid" red usage.** It is
-the only direction that wins on the three axes that matter: it *says love*
-(B never does), it is *ownable* (C is Tinder territory), and it holds
-women-first through premium elegance. It is also the natural continuation of
-the v2 work — the existing lead was right, it needed real alternatives to
-confirm it.
+**Decision (2026-07-03): Direction A — Rouge Signature, "hybrid" red usage,
+signed by Marwane.** It is the only direction that wins on the three axes
+that matter: it *says love* (B never does), it is *ownable* (C is Tinder
+territory), and it holds women-first through premium elegance. It is also the
+natural continuation of the v2 work — the existing lead was right, it needed
+real alternatives to confirm it.
 
-### How the three v2 open points close (if A is signed)
+### How the three v2 open points closed
 
 1. **Red usage philosophy → hybrid.** Punctuation system on ~95% of the app
    (dark + cream, red only for the ♥ and the primary CTA); full-red reserved
@@ -89,7 +90,7 @@ confirm it.
    *only* ever a 1px hairline (never a fill, never a button), and blush gets a
    defined job (soft states: invisible mode, safety confirmations, focus ring).
 
-## The system (Direction A — final if signed)
+## The system (Direction A — final)
 
 ### Tokens (WCAG contrast measured)
 
@@ -156,13 +157,10 @@ or busy photos; champagne as a fill or button (gold + red = Christmas /
 fast-food); red for errors or danger; multicolour gradients, glassmorphism,
 neon.
 
-## Open decision (blocking implementation)
+## Open decisions
 
-**One decision left: which direction ships.** Recommendation is A (Rouge
-Signature, hybrid red usage) — the full system above is final if A is signed.
-If B or C is preferred, their palettes and type pairings on the board are
-complete and contrast-verified, and an equivalent system spec gets written for
-the chosen one.
+None — the direction is signed (see `docs/decisions.md`, 2026-07-03).
+Implementation can start with the "Next steps" below.
 
 ## The board
 
@@ -182,7 +180,7 @@ pros/cons), (04) comparison table + recommendation, (05) the full system for
 Direction A (tokens with measured contrast, component rules, do/don't).
 The v2 board (single-direction exploration) is in git history.
 
-## Next steps (once the direction is signed)
+## Next steps
 
 1. Wire tokens into Tailwind 4 via `@theme` in `app/globals.css`.
 2. Source the fonts (Bodoni Moda + Inter + Jost) via `next/font`.
