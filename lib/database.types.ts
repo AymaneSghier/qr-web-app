@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      admins: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       blocks: {
         Row: {
           blocked_id: string
@@ -120,7 +135,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          expires_at: string
+          expires_at?: string
           id?: string
           profile_a: string
           profile_b: string
@@ -367,6 +382,7 @@ export type Database = {
           city: string | null
           created_at: string
           id: string
+          is_live: boolean
           name: string
           slug: string
           timezone: string
@@ -375,6 +391,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           id?: string
+          is_live?: boolean
           name: string
           slug: string
           timezone?: string
@@ -383,6 +400,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           id?: string
+          is_live?: boolean
           name?: string
           slug?: string
           timezone?: string
@@ -394,6 +412,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_night_stats: {
+        Args: never
+        Returns: {
+          chats_started: number
+          checkins: number
+          likes: number
+          matches: number
+          night: string
+          venue_id: string
+          venue_name: string
+        }[]
+      }
+      am_i_admin: { Args: never; Returns: boolean }
       check_in: {
         Args: { p_venue_id: string }
         Returns: {
@@ -413,6 +444,24 @@ export type Database = {
         }
       }
       close_ended_nights: { Args: never; Returns: number }
+      set_venue_live: {
+        Args: { p_live: boolean; p_venue_id: string }
+        Returns: {
+          city: string | null
+          created_at: string
+          id: string
+          is_live: boolean
+          name: string
+          slug: string
+          timezone: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "venues"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never
