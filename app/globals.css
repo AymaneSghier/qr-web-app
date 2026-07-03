@@ -1,21 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --background: #070305;
-  --foreground: #fff7ed;
-  --night-ink: #070305;
-  --night-wine: #2a0715;
-  --night-rose: #ff3d81;
-  --night-amber: #f6b35a;
-  --night-violet: #8b5cf6;
-  --night-muted: #bda7a5;
+  /* Amourette — Direction A "Rouge Signature" (docs/design.md, locked 2026-07-03).
+     Warm near-black night; red is an event, never running text. No pure #000/#FFF:
+     scrims and shadows are tinted velvet. */
+  --velvet: #150e10; /* app background */
+  --bordeaux: #231317; /* surfaces, cards, inputs */
+  --red: #d01f3c; /* signature: the heart, CTA, hero wordmark */
+  --red-deep: #c11b37; /* the two full-red screens: match + splash */
+  --wine: #7c1d2e; /* depth, hover — never sole information carrier */
+  --champagne: #d9b779; /* 1px hairlines only, never a fill or button */
+  --blush: #e9b9bc; /* soft states: invisible, safety confirmations, focus ring */
+  --cream: #f4ebe1; /* primary text, everyday wordmark */
+  --taupe: #a98f86; /* secondary text, placeholders */
+  --ink: #1a0f12; /* text on light backgrounds */
+
+  /* velvet as raw channels, for tinted scrims/shadows (never pure black) */
+  --velvet-rgb: 21, 14, 16;
+
+  --background: var(--velvet);
+  --foreground: var(--cream);
 }
 
 @theme inline {
+  --color-velvet: var(--velvet);
+  --color-bordeaux: var(--bordeaux);
+  --color-red: var(--red);
+  --color-red-deep: var(--red-deep);
+  --color-wine: var(--wine);
+  --color-champagne: var(--champagne);
+  --color-blush: var(--blush);
+  --color-cream: var(--cream);
+  --color-taupe: var(--taupe);
+  --color-ink: var(--ink);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 body {
