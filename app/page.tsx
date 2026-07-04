@@ -145,34 +145,34 @@ export default function Home() {
       <section className="night-content mx-auto w-full max-w-5xl">
         {error ? (
           <div className="max-w-2xl">
-            <h1 className="text-6xl font-black leading-[0.9] tracking-normal text-white sm:text-8xl">
-              Paramour
+            <h1 className="wordmark text-6xl leading-[0.9] text-red sm:text-8xl">
+              Amourette
             </h1>
-            <p className="mt-10 max-w-md rounded-2xl border border-red-300/20 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+            <p className="mt-10 max-w-md rounded-2xl border border-champagne/20 bg-bordeaux px-4 py-3 text-sm text-blush">
               {error}
             </p>
           </div>
         ) : state === "loading" ? (
           <div className="max-w-2xl">
             <p className="night-kicker">{s.welcome}</p>
-            <h1 className="mt-4 text-6xl font-black leading-[0.9] tracking-normal text-white sm:text-8xl">
-              Paramour
+            <h1 className="wordmark mt-4 text-6xl leading-[0.9] text-red sm:text-8xl">
+              Amourette
             </h1>
-            <div className="mt-10 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-[#e7c7b4] backdrop-blur">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-[#f6b35a] shadow-[0_0_18px_rgba(246,179,90,0.9)]" />
+            <div className="mt-10 inline-flex items-center gap-3 rounded-full border border-champagne/20 bg-bordeaux px-4 py-3 text-sm text-taupe">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-blush" />
               {s.settingUp}
             </div>
           </div>
         ) : state === "new" ? (
           <div className="max-w-2xl">
             <p className="night-kicker">{s.welcome}</p>
-            <h1 className="mt-4 text-6xl font-black leading-[0.9] tracking-normal text-white sm:text-8xl">
-              Paramour
+            <h1 className="wordmark mt-4 text-6xl leading-[0.9] text-red sm:text-8xl">
+              Amourette
             </h1>
-            <p className="mt-6 max-w-sm text-xl font-medium leading-relaxed text-[#f9d7c4] sm:text-2xl">
+            <p className="mt-6 max-w-sm text-xl font-medium leading-relaxed text-cream sm:text-2xl">
               {s.tagline}
             </p>
-            <p className="mt-8 inline-flex rounded-2xl border border-[#f6b35a]/25 bg-[#f6b35a]/10 px-4 py-3 text-sm font-semibold text-[#fde7bd]">
+            <p className="mt-8 inline-flex rounded-2xl border border-champagne/20 bg-bordeaux px-4 py-3 text-sm text-taupe">
               {s.newVisitorLead}
             </p>
             {devLink && <div>{devLink}</div>}
@@ -181,16 +181,16 @@ export default function Home() {
           <div className="grid w-full items-center gap-8 lg:grid-cols-[1fr_28rem]">
             <div className="max-w-xl">
               <p className="night-kicker">{s.welcomeBack}</p>
-              <h1 className="mt-4 text-5xl font-black leading-[0.95] tracking-normal text-white sm:text-7xl">
-                Paramour
+              <h1 className="wordmark mt-4 text-5xl leading-[0.95] text-red sm:text-7xl">
+                Amourette
               </h1>
-              <p className="mt-6 inline-flex rounded-2xl border border-[#f6b35a]/25 bg-[#f6b35a]/10 px-4 py-3 text-sm font-semibold text-[#fde7bd]">
+              <p className="mt-6 inline-flex rounded-2xl border border-champagne/20 bg-bordeaux px-4 py-3 text-sm text-taupe">
                 {s.returningLead}
               </p>
 
               {activeChats.length > 0 && (
                 <div className="mt-8">
-                  <p className="text-sm font-semibold text-[#d9bbb1]">
+                  <p className="text-sm font-medium text-taupe">
                     {s.activeChatTitle}
                   </p>
                   <div className="mt-3 flex flex-col gap-2">
@@ -214,7 +214,7 @@ export default function Home() {
               <div className="night-panel w-full rounded-[2rem] p-6 sm:p-8">
                 <p className="night-kicker">{s.yourProfile}</p>
                 <div className="mt-5 flex items-center gap-4">
-                  <div className="night-photo-ring h-20 w-20 overflow-hidden rounded-full border border-[#f6b35a]/45 bg-black/35">
+                  <div className="night-photo-ring h-20 w-20 overflow-hidden rounded-full border border-champagne/40 bg-bordeaux">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={profile.photo_url}
@@ -223,22 +223,22 @@ export default function Home() {
                     />
                   </div>
                   <div>
-                    <p className="text-2xl font-black leading-tight text-white">
+                    <p className="wordmark text-2xl font-semibold leading-tight text-cream">
                       {profile.first_name}
                     </p>
-                    <p className="mt-1 text-sm text-[#d9bbb1]">
+                    <p className="mt-1 text-sm text-taupe">
                       {p.iAm} {genderLabels[profile.gender].toLowerCase()}
                     </p>
                   </div>
                 </div>
 
                 {profile.bio && (
-                  <p className="mt-4 leading-relaxed text-[#e7c7b4]">
+                  <p className="mt-4 leading-relaxed text-cream">
                     {profile.bio}
                   </p>
                 )}
 
-                <p className="mt-4 text-sm text-[#d9bbb1]">
+                <p className="mt-4 text-sm text-taupe">
                   {p.iWantToMeet}:{" "}
                   {profile.interested_in
                     .map((g) => genderLabels[g].toLowerCase())

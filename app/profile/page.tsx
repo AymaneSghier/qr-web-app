@@ -318,21 +318,21 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
+    <main className="night-shell px-5 py-8 text-cream sm:px-6 sm:py-10">
       <div className="fixed right-5 top-5 z-20">
         <LanguageSelector />
       </div>
       <section className="night-content mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-5xl items-center gap-8 lg:grid-cols-[1fr_28rem]">
         <div className="hidden lg:block">
-          <p className="night-kicker">Paramour</p>
-          <h1 className="mt-5 max-w-xl text-6xl font-black leading-[0.95] tracking-normal">
+          <p className="wordmark text-2xl text-cream">Amourette</p>
+          <h1 className="font-display mt-5 max-w-xl text-6xl font-medium leading-[0.95]">
             {headline}
           </h1>
-          <p className="mt-6 max-w-md text-lg leading-relaxed text-[#e7c7b4]">
+          <p className="mt-6 max-w-md text-lg leading-relaxed text-taupe">
             {subhead}
           </p>
           {targetVenueName && (
-            <p className="mt-5 inline-flex rounded-2xl border border-[#f6b35a]/25 bg-[#f6b35a]/10 px-4 py-3 text-sm font-semibold text-[#fde7bd]">
+            <p className="mt-5 inline-flex rounded-2xl border border-champagne/20 bg-bordeaux px-4 py-3 text-sm text-taupe">
               {s.tonightAt(targetVenueName)}
             </p>
           )}
@@ -346,15 +346,15 @@ export default function ProfilePage() {
         </div>
 
         <div className="night-panel w-full rounded-[2rem] p-6 sm:p-8">
-          <p className="night-kicker lg:hidden">Paramour</p>
-          <h1 className="mt-3 text-4xl font-black leading-tight tracking-normal lg:hidden">
+          <p className="wordmark text-xl text-cream lg:hidden">Amourette</p>
+          <h1 className="font-display mt-3 text-4xl font-medium leading-tight lg:hidden">
             {headline}
           </h1>
-          <p className="mt-3 leading-relaxed text-[#d9bbb1] lg:hidden">
+          <p className="mt-3 leading-relaxed text-taupe lg:hidden">
             {subhead}
           </p>
           {targetVenueName && (
-            <p className="mt-4 rounded-2xl border border-[#f6b35a]/25 bg-[#f6b35a]/10 px-4 py-3 text-sm font-semibold text-[#fde7bd]">
+            <p className="mt-4 rounded-2xl border border-champagne/20 bg-bordeaux px-4 py-3 text-sm text-taupe">
               {s.tonightAt(targetVenueName)}
             </p>
           )}
@@ -363,7 +363,7 @@ export default function ProfilePage() {
           <>
             <div className="mt-8 flex justify-center">
               <label className="cursor-pointer">
-                <div className="night-photo-ring flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border border-dashed border-[#f6b35a]/45 bg-black/35 text-center text-sm font-semibold text-[#e7c7b4] transition hover:border-[#ff6b9d]/70">
+                <div className="night-photo-ring flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border border-dashed border-champagne/40 bg-bordeaux text-center text-sm font-medium text-taupe transition hover:border-blush/60">
                   {previewUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -399,7 +399,7 @@ export default function ProfilePage() {
             />
 
             <div className="mt-6">
-              <p className="text-sm font-semibold text-[#d9bbb1]">{s.iAm}</p>
+              <p className="text-sm font-medium text-taupe">{s.iAm}</p>
               <div className="mt-2 flex gap-2">
                 {GENDERS.map((g) => (
                   <button
@@ -408,7 +408,7 @@ export default function ProfilePage() {
                     onClick={() => setGender(g)}
                     className={`night-button min-w-0 flex-1 px-3 py-3 text-sm ${
                       gender === g
-                        ? "night-button-primary"
+                        ? "border border-wine bg-wine text-cream"
                         : "night-button-secondary"
                     }`}
                   >
@@ -419,7 +419,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="mt-6">
-              <p className="text-sm font-semibold text-[#d9bbb1]">
+              <p className="text-sm font-medium text-taupe">
                 {s.iWantToMeet}
               </p>
               <div className="mt-2 flex gap-2">
@@ -430,7 +430,7 @@ export default function ProfilePage() {
                     onClick={() => toggleInterest(g)}
                     className={`night-button min-w-0 flex-1 px-3 py-3 text-sm ${
                       interestedIn.includes(g)
-                        ? "night-button-primary"
+                        ? "border border-wine bg-wine text-cream"
                         : "night-button-secondary"
                     }`}
                   >
@@ -443,12 +443,12 @@ export default function ProfilePage() {
         )}
 
         {!editMode && (
-          <label className="mt-6 flex items-start gap-3 rounded-2xl border border-white/10 bg-black/35 p-4 text-sm leading-relaxed text-[#d9bbb1]">
+          <label className="mt-6 flex items-start gap-3 rounded-2xl border border-champagne/15 bg-bordeaux p-4 text-sm leading-relaxed text-taupe">
             <input
               type="checkbox"
               checked={adultConfirmed}
               onChange={(e) => setAdultConfirmed(e.target.checked)}
-              className="mt-1 h-4 w-4 accent-[#f6b35a]"
+              className="mt-1 h-4 w-4 accent-blush"
             />
             <span>{s.adultConfirm}</span>
           </label>
@@ -472,7 +472,7 @@ export default function ProfilePage() {
         )}
 
         {message && (
-          <p className="mt-4 rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-center text-sm text-[#e7c7b4]">
+          <p className="mt-4 rounded-2xl border border-champagne/15 bg-bordeaux px-4 py-3 text-center text-sm text-taupe">
             {message}
           </p>
         )}
