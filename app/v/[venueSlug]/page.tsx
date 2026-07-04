@@ -572,10 +572,10 @@ export default function VenueRoom() {
   if (status === "loading") {
     return (
       <Shell>
-        <div className="mx-auto h-12 w-12 rounded-full border border-[#f6b35a]/25 bg-[#f6b35a]/10 p-2 shadow-[0_0_34px_rgba(246,179,90,0.18)]">
-          <span className="block h-full w-full animate-pulse rounded-full bg-[#f6b35a] shadow-[0_0_22px_rgba(246,179,90,0.75)]" />
+        <div className="mx-auto h-12 w-12 rounded-full border border-champagne/25 bg-bordeaux p-2">
+          <span className="block h-full w-full animate-pulse rounded-full bg-blush" />
         </div>
-        <p className="mt-5 text-base font-semibold text-[#fde7bd]">
+        <p className="mt-5 text-base font-medium text-taupe">
           {s.entering}
         </p>
       </Shell>
@@ -585,7 +585,7 @@ export default function VenueRoom() {
   if (status === "error") {
     return (
       <Shell>
-        <p className="text-sm text-red-400">{errorMsg}</p>
+        <p className="text-sm text-blush">{errorMsg}</p>
       </Shell>
     );
   }
@@ -593,7 +593,7 @@ export default function VenueRoom() {
   if (status === "left") {
     return (
       <Shell>
-        <h2 className="text-2xl font-black">{s.leftTitle}</h2>
+        <h2 className="font-display text-2xl font-medium">{s.leftTitle}</h2>
         <p className="night-muted mt-3">{s.leftBody}</p>
         <button
           onClick={rejoin}
@@ -607,13 +607,13 @@ export default function VenueRoom() {
 
   if (status === "invisible") {
     return (
-      <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
+      <main className="night-shell px-5 py-8 text-cream sm:px-6 sm:py-10">
         <div className="fixed right-5 top-5 z-20">
           <LanguageSelector />
         </div>
         <div className="night-content mx-auto max-w-3xl">
-          <p className="night-kicker">Paramour</p>
-          <h1 className="mt-4 text-5xl font-black leading-tight tracking-normal">
+          <p className="wordmark text-xl text-cream">Amourette</p>
+          <h1 className="font-display mt-4 text-5xl font-medium leading-tight">
             {s.invisibleTitle}
           </h1>
           <p className="night-muted mt-4 max-w-xl leading-relaxed">
@@ -644,7 +644,7 @@ export default function VenueRoom() {
                     className="night-card-hot relative rounded-2xl p-3"
                   >
                     {(unreadByMatchId[match.id] ?? 0) > 0 && (
-                      <span className="absolute right-3 top-3 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#ff6b9d] px-2 text-xs font-black text-white shadow-[0_0_22px_rgba(255,107,157,0.65)]">
+                      <span className="absolute right-3 top-3 flex h-6 min-w-6 items-center justify-center rounded-full bg-blush px-2 text-xs font-semibold text-ink">
                         {unreadByMatchId[match.id]}
                       </span>
                     )}
@@ -660,10 +660,10 @@ export default function VenueRoom() {
                         className="night-photo-ring h-12 w-12 rounded-full object-cover"
                       />
                       <span>
-                        <span className="block font-bold text-white">
+                        <span className="wordmark block text-lg font-semibold text-cream">
                           {match.other.first_name}
                         </span>
-                        <span className="block text-sm text-[#fde7bd]">
+                        <span className="block text-sm text-taupe">
                           {s.chat}
                         </span>
                       </span>
@@ -673,7 +673,7 @@ export default function VenueRoom() {
               </div>
             </section>
           )}
-          {errorMsg && <p className="mt-6 text-sm text-red-300">{errorMsg}</p>}
+          {errorMsg && <p className="mt-6 text-sm text-blush">{errorMsg}</p>}
         </div>
       </main>
     );
@@ -682,18 +682,18 @@ export default function VenueRoom() {
   const visible = candidates.filter((c) => !matchedIds.has(c.id));
 
   return (
-    <main className="night-shell px-5 py-8 text-white sm:px-6 sm:py-10">
+    <main className="night-shell px-5 py-8 text-cream sm:px-6 sm:py-10">
       <div className="fixed right-5 top-5 z-20">
         <LanguageSelector />
       </div>
       <div className="night-content mx-auto max-w-6xl">
         <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="night-kicker">Paramour</p>
-            <h1 className="mt-4 text-5xl font-black leading-[0.95] tracking-normal sm:text-6xl">
+            <p className="wordmark text-xl text-cream">Amourette</p>
+            <h1 className="font-display mt-4 text-5xl font-medium leading-[0.95] sm:text-6xl">
               {s.whosHere(venue?.name ?? "")}
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[#e7c7b4]">
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-taupe">
               {s.pitch}
             </p>
           </div>
@@ -720,7 +720,7 @@ export default function VenueRoom() {
           <span className="night-pill rounded-full px-4 py-2">
             {s.mutualCount(matches.length)}
           </span>
-          <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[#d9bbb1]">
+          <span className="rounded-full border border-champagne/20 bg-bordeaux px-4 py-2 text-taupe">
             {s.discreetByDesign}
           </span>
         </div>
@@ -729,7 +729,7 @@ export default function VenueRoom() {
           <section className="night-card-hot mt-8 rounded-[1.5rem] p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-xl font-black">{s.firstTimeHintTitle}</h2>
+                <h2 className="font-display text-xl font-medium">{s.firstTimeHintTitle}</h2>
                 <p className="night-muted mt-2 max-w-2xl text-sm leading-relaxed">
                   {s.firstTimeHintBody}
                 </p>
@@ -762,7 +762,7 @@ export default function VenueRoom() {
                   className="night-card-hot relative min-w-60 rounded-2xl p-3"
                 >
                   {(unreadByMatchId[match.id] ?? 0) > 0 && (
-                    <span className="absolute right-3 top-3 flex h-6 min-w-6 items-center justify-center rounded-full bg-[#ff6b9d] px-2 text-xs font-black text-white shadow-[0_0_22px_rgba(255,107,157,0.65)]">
+                    <span className="absolute right-3 top-3 flex h-6 min-w-6 items-center justify-center rounded-full bg-blush px-2 text-xs font-semibold text-ink">
                       {unreadByMatchId[match.id]}
                     </span>
                   )}
@@ -778,10 +778,10 @@ export default function VenueRoom() {
                       className="night-photo-ring h-12 w-12 rounded-full object-cover"
                     />
                     <span>
-                      <span className="block font-bold text-white">
+                      <span className="wordmark block text-lg font-semibold text-cream">
                         {match.other.first_name}
                       </span>
-                      <span className="block text-sm text-[#fde7bd]">
+                      <span className="block text-sm text-taupe">
                         {s.chat}
                       </span>
                     </span>
@@ -808,12 +808,12 @@ export default function VenueRoom() {
 
         {visible.length === 0 ? (
           <div className="night-panel mt-12 rounded-[2rem] p-8 text-center">
-            <p className="night-kicker">Paramour</p>
-            <h2 className="mt-3 text-3xl font-black">{s.emptyTitle}</h2>
+            <p className="wordmark text-xl text-cream">Amourette</p>
+            <h2 className="font-display mt-3 text-3xl font-medium">{s.emptyTitle}</h2>
             <p className="night-muted mx-auto mt-3 max-w-md leading-relaxed">
               {s.empty}
             </p>
-            <p className="mt-5 text-sm font-semibold text-[#fde7bd]">
+            <p className="mt-5 text-sm font-medium text-taupe">
               {s.emptyActionHint}
             </p>
             <div className="mt-7">
@@ -841,9 +841,11 @@ export default function VenueRoom() {
                       alt={c.first_name}
                       className="h-72 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                     />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-4">
-                      <h2 className="text-3xl font-black">{c.first_name}</h2>
-                      <p className="mt-1 min-h-[1.25rem] text-sm text-[#e7c7b4]">
+                    <div className="card-scrim absolute inset-x-0 bottom-0 p-4">
+                      <h2 className="wordmark text-3xl font-semibold text-cream">
+                        {c.first_name}
+                      </h2>
+                      <p className="mt-1 min-h-[1.25rem] text-sm text-taupe">
                         {c.bio ?? ""}
                       </p>
                     </div>
@@ -851,15 +853,17 @@ export default function VenueRoom() {
                   <button
                     onClick={() => like(c)}
                     disabled={liked}
-                    className={`night-button mt-4 w-full px-5 py-3 ${
-                      liked
-                        ? "cursor-default border border-white/10 bg-white/10 text-[#bda7a5]"
-                        : "night-button-primary"
+                    aria-label={liked ? s.liked : s.like}
+                    className={`heart-button mt-4 w-full px-5 py-3 text-sm ${
+                      liked ? "heart-liked cursor-default" : "heart-idle"
                     }`}
                   >
+                    <span aria-hidden className="text-lg leading-none">
+                      {liked ? "♥" : "♡"}
+                    </span>
                     {liked ? s.liked : s.like}
                   </button>
-                  <p className="mt-2 text-center text-xs font-semibold text-[#bda7a5]">
+                  <p className="mt-2 text-center text-xs font-medium text-taupe">
                     {s.likeHint}
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
@@ -884,52 +888,51 @@ export default function VenueRoom() {
       </div>
 
       {newMatch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur-xl">
-          <div className="night-card-hot w-full max-w-sm rounded-[2rem] p-8 text-center">
-            <p className="night-kicker">
-              {s.matchKicker}
-            </p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={newMatch.other.photo_url}
-              alt={newMatch.other.first_name}
-              className="night-photo-ring mx-auto mt-6 h-32 w-32 rounded-full object-cover"
-            />
-            <h2 className="mt-4 text-3xl font-black">
-              {newMatch.other.first_name}
-            </h2>
-            <p className="mt-3 text-zinc-300">{s.matchBody}</p>
-            <div className="mt-8 grid gap-3">
-              <Link
-                href={`/chat/${newMatch.id}`}
-                className="night-button night-button-primary w-full px-5 py-4 text-center"
-              >
-                {s.openChat}
-              </Link>
-              <button
-                onClick={() => setNewMatch(null)}
-                className="night-button night-button-secondary w-full px-5 py-4"
-              >
-                {s.matchDismiss}
-              </button>
-            </div>
+        // One of the only two full-red screens (docs/design.md): the match reveal.
+        // A curtain rising, not a jackpot — no confetti, a slow fade.
+        <div className="animate-curtain fixed inset-0 z-50 flex flex-col items-center justify-center bg-red-deep px-6 text-center text-cream">
+          <p className="wordmark text-2xl text-cream">Amourette</p>
+          <p className="night-kicker mt-8 text-blush">{s.matchKicker}</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={newMatch.other.photo_url}
+            alt={newMatch.other.first_name}
+            className="mx-auto mt-6 h-32 w-32 rounded-full object-cover shadow-[0_0_0_1px_rgba(244,235,225,0.5)]"
+          />
+          <h2 className="wordmark mt-6 text-5xl font-medium italic text-cream">
+            {newMatch.other.first_name}
+          </h2>
+          <p className="mt-4 max-w-xs text-blush">{s.matchBody}</p>
+          <div className="mt-10 grid w-full max-w-xs gap-3">
+            <Link
+              href={`/chat/${newMatch.id}`}
+              className="night-button w-full bg-cream px-5 py-4 text-center text-red-deep"
+            >
+              {s.openChat}
+            </Link>
+            <button
+              onClick={() => setNewMatch(null)}
+              className="night-button w-full border border-cream/40 px-5 py-4 text-cream"
+            >
+              {s.matchDismiss}
+            </button>
           </div>
         </div>
       )}
 
       {reportTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-velvet/85 px-6">
           <form
             onSubmit={submitReport}
             className="night-panel w-full max-w-sm rounded-[2rem] p-6"
           >
-            <h2 className="text-2xl font-black">
+            <h2 className="font-display text-2xl font-medium">
               {s.reportTitle(reportTarget.first_name)}
             </h2>
             {reportSubmitted ? (
               <>
-                <p className="mt-4 text-zinc-300">{s.reportSuccess}</p>
-                <p className="mt-2 text-sm text-zinc-500">
+                <p className="mt-4 text-taupe">{s.reportSuccess}</p>
+                <p className="mt-2 text-sm text-taupe">
                   {s.reportBlockPrompt}
                 </p>
                 <div className="mt-6 grid gap-3">
@@ -951,7 +954,7 @@ export default function VenueRoom() {
               </>
             ) : (
               <>
-                <label className="mt-5 block text-sm font-semibold text-zinc-300">
+                <label className="mt-5 block text-sm font-medium text-taupe">
                   {s.reportReason}
                   <select
                     value={reportReason}
@@ -975,12 +978,13 @@ export default function VenueRoom() {
                   className="night-input mt-4 h-28 resize-none px-4 py-3"
                 />
                 {errorMsg && (
-                  <p className="mt-3 text-sm text-red-400">{errorMsg}</p>
+                  <p className="mt-3 text-sm text-blush">{errorMsg}</p>
                 )}
                 <div className="mt-6 grid gap-3">
+                  {/* Safety action — never red. A cream-filled affirmative on bordeaux. */}
                   <button
                     type="submit"
-                    className="night-button night-button-primary px-5 py-3"
+                    className="night-button bg-cream px-5 py-3 text-ink"
                   >
                     {s.reportSubmit}
                   </button>
@@ -999,19 +1003,17 @@ export default function VenueRoom() {
       )}
 
       {showPromo && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 px-6 backdrop-blur">
-          <div className="w-full max-w-md rounded-3xl border border-yellow-400/30 bg-zinc-950 p-7 shadow-2xl">
-            <p className="text-sm uppercase tracking-[0.35em] text-yellow-400">
-              Paramour
-            </p>
-            <h2 className="mt-3 text-3xl font-black">{s.promoTitle}</h2>
-            <p className="mt-3 text-zinc-300">{s.promoBody}</p>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-velvet/85 px-6">
+          <div className="night-panel w-full max-w-md rounded-[2rem] p-7">
+            <p className="wordmark text-xl text-cream">Amourette</p>
+            <h2 className="font-display mt-3 text-3xl font-medium">{s.promoTitle}</h2>
+            <p className="mt-3 text-taupe">{s.promoBody}</p>
             <div className="mt-7 grid gap-3">
               <a
                 href={APP_STORE_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-2xl bg-yellow-400 px-5 py-3 text-center font-bold text-black transition hover:bg-yellow-300"
+                className="night-button night-button-primary px-5 py-3 text-center"
               >
                 {s.promoPrimary}
               </a>
@@ -1019,14 +1021,14 @@ export default function VenueRoom() {
                 href={GOOGLE_PLAY_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-2xl border border-white/10 px-5 py-3 text-center font-bold text-white transition hover:border-white/30"
+                className="night-button night-button-secondary px-5 py-3 text-center"
               >
                 {s.promoSecondary}
               </a>
               <button
                 type="button"
                 onClick={dismissPromo}
-                className="rounded-2xl px-5 py-3 text-center text-sm font-semibold text-zinc-400 transition hover:text-zinc-200"
+                className="night-button px-5 py-3 text-center text-sm text-taupe transition hover:text-cream"
               >
                 {s.promoDismiss}
               </button>
@@ -1040,12 +1042,12 @@ export default function VenueRoom() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="night-shell flex min-h-screen items-center justify-center px-6 text-white">
+    <main className="night-shell flex min-h-screen items-center justify-center px-6 text-cream">
       <div className="fixed right-5 top-5 z-20">
         <LanguageSelector />
       </div>
       <div className="night-content night-panel w-full max-w-md rounded-[2rem] p-8 text-center">
-        <p className="night-kicker">Paramour</p>
+        <p className="wordmark text-xl text-cream">Amourette</p>
         <div className="mt-6">{children}</div>
       </div>
     </main>
