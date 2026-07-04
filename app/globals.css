@@ -55,28 +55,14 @@ body {
 }
 
 @layer components {
+  /* App background = the venue at night: calm warm near-black, a single soft
+     wine glow for depth. No neon, no glassmorphism, no pure-black scrims. */
   .night-shell {
     position: relative;
     min-height: 100vh;
     overflow: hidden;
-    background:
-      radial-gradient(circle at 18% 12%, rgba(255, 61, 129, 0.22), transparent 32rem),
-      radial-gradient(circle at 82% 8%, rgba(139, 92, 246, 0.2), transparent 30rem),
-      radial-gradient(circle at 50% 105%, rgba(246, 179, 90, 0.16), transparent 34rem),
-      linear-gradient(145deg, #050203 0%, #13050b 45%, #06030a 100%);
-    color: #fff7ed;
-  }
-
-  .night-shell::before {
-    content: "";
-    pointer-events: none;
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-    background-size: 42px 42px;
-    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 78%);
+    background: var(--velvet);
+    color: var(--cream);
   }
 
   .night-shell::after {
@@ -84,9 +70,11 @@ body {
     pointer-events: none;
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.34) 100%),
-      radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.46) 100%);
+    background: radial-gradient(
+      120% 85% at 50% -8%,
+      rgba(124, 29, 46, 0.16),
+      transparent 60%
+    );
   }
 
   .night-content {
@@ -94,129 +82,197 @@ body {
     z-index: 1;
   }
 
+  /* The wordmark, in Bodoni Moda. Colour is set per-use (red hero, cream in-app). */
+  .wordmark {
+    font-family: var(--font-bodoni), Georgia, serif;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* Champagne hairline — the ONLY gold in the app. 1px, gradient, opacity <= .5. */
+  .hairline {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(90deg, transparent, var(--champagne), transparent);
+    opacity: 0.45;
+  }
+
+  /* Photo scrim: fades to velvet, never to pure black (docs/design.md). */
+  .card-scrim {
+    background: linear-gradient(
+      180deg,
+      transparent 42%,
+      rgba(var(--velvet-rgb), 0.92)
+    );
+  }
+
   .night-panel {
-    border: 1px solid rgba(255, 255, 255, 0.11);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035));
-    box-shadow:
-      0 24px 80px rgba(0, 0, 0, 0.42),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(22px);
+    border: 1px solid rgba(217, 183, 121, 0.2);
+    border-radius: 20px;
+    background: linear-gradient(180deg, #1b0f13, var(--bordeaux));
+    box-shadow: 0 24px 80px rgba(var(--velvet-rgb), 0.55);
   }
 
   .night-card {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
-    box-shadow:
-      0 18px 70px rgba(0, 0, 0, 0.34),
-      0 0 0 1px rgba(255, 61, 129, 0.04);
-    backdrop-filter: blur(18px);
+    border: 1px solid rgba(217, 183, 121, 0.14);
+    border-radius: 20px;
+    background: var(--bordeaux);
+    box-shadow: 0 18px 60px rgba(var(--velvet-rgb), 0.45);
   }
 
+  /* Emphasised card (active matches): bordeaux with a warmer wine wash and a
+     slightly stronger champagne hairline. Still no red — red stays the heart. */
   .night-card-hot {
-    border-color: rgba(246, 179, 90, 0.28);
-    background:
-      linear-gradient(145deg, rgba(246, 179, 90, 0.14), rgba(255, 61, 129, 0.06)),
-      rgba(255, 255, 255, 0.045);
-    box-shadow:
-      0 20px 80px rgba(0, 0, 0, 0.42),
-      0 0 42px rgba(255, 61, 129, 0.12);
+    border: 1px solid rgba(217, 183, 121, 0.3);
+    border-radius: 20px;
+    background: linear-gradient(160deg, #2a151b, var(--bordeaux));
+    box-shadow: 0 18px 60px rgba(var(--velvet-rgb), 0.5);
   }
 
+  /* Kicker & wordmark micro-label — Jost, uppercase, tracked. Taupe, never red. */
   .night-kicker {
-    color: #f6b35a;
+    font-family: var(--font-jost), system-ui, sans-serif;
+    color: var(--taupe);
     font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.28em;
+    font-weight: 400;
+    letter-spacing: 0.3em;
     text-transform: uppercase;
   }
 
   .night-muted {
-    color: var(--night-muted);
+    color: var(--taupe);
   }
 
   .night-input {
     width: 100%;
-    border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(5, 2, 3, 0.56);
-    color: #fff7ed;
+    border-radius: 14px;
+    border: 1px solid rgba(217, 183, 121, 0.18);
+    background: #1b0f13;
+    color: var(--cream);
     outline: none;
+    font-family: var(--font-inter), system-ui, sans-serif;
     transition:
-      border-color 180ms ease,
-      box-shadow 180ms ease,
-      background 180ms ease;
+      border-color 300ms ease,
+      box-shadow 300ms ease;
   }
 
   .night-input::placeholder {
-    color: rgba(189, 167, 165, 0.55);
+    color: var(--taupe);
+    opacity: 0.7;
   }
 
+  /* Focus ring is blush (a soft state), never red. */
   .night-input:focus {
-    border-color: rgba(246, 179, 90, 0.72);
-    background: rgba(8, 3, 5, 0.78);
-    box-shadow: 0 0 0 4px rgba(246, 179, 90, 0.12);
+    border-color: var(--blush);
+    box-shadow: 0 0 0 3px rgba(233, 185, 188, 0.18);
   }
 
+  /* Buttons: pill, Jost uppercase tracked labels. Slow fades, no lift/bounce. */
   .night-button {
-    border-radius: 1rem;
-    font-weight: 800;
+    border-radius: 9999px;
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     transition:
-      transform 180ms ease,
-      border-color 180ms ease,
-      background 180ms ease,
-      box-shadow 180ms ease,
-      color 180ms ease;
+      background 300ms ease,
+      border-color 300ms ease,
+      color 300ms ease,
+      opacity 300ms ease;
   }
 
-  .night-button:hover {
-    transform: translateY(-1px);
-  }
-
-  .night-button:active {
-    transform: translateY(0);
-  }
-
+  /* Primary CTA: red fill, cream label. One per screen. */
   .night-button-primary {
-    background: linear-gradient(135deg, #f6b35a, #ff6b9d 58%, #c084fc);
-    color: #120508;
-    box-shadow: 0 16px 42px rgba(255, 61, 129, 0.24);
+    background: var(--red);
+    color: var(--cream);
+    border: 1px solid var(--red);
   }
 
   .night-button-primary:hover {
-    box-shadow: 0 18px 58px rgba(255, 61, 129, 0.32);
+    background: var(--red-deep);
+    border-color: var(--red-deep);
   }
 
   .night-button-secondary {
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.055);
-    color: #fff7ed;
+    background: var(--bordeaux);
+    color: var(--cream);
+    border: 1px solid rgba(217, 183, 121, 0.22);
   }
 
   .night-button-secondary:hover {
-    border-color: rgba(246, 179, 90, 0.48);
-    background: rgba(246, 179, 90, 0.08);
+    border-color: rgba(217, 183, 121, 0.42);
   }
 
+  /* Safety UI (report / block) is NEVER red — red is love only. Blush on bordeaux. */
   .night-button-danger {
-    border: 1px solid rgba(248, 113, 113, 0.34);
-    background: rgba(127, 29, 29, 0.14);
-    color: #fecaca;
+    background: var(--bordeaux);
+    color: var(--blush);
+    border: 1px solid rgba(233, 185, 188, 0.3);
   }
 
   .night-button-danger:hover {
-    border-color: rgba(252, 165, 165, 0.58);
-    background: rgba(127, 29, 29, 0.24);
+    background: #2a1519;
+    border-color: rgba(233, 185, 188, 0.55);
   }
 
+  /* Informational pill — hairline, taupe, never a red or gold fill. */
   .night-pill {
-    border: 1px solid rgba(246, 179, 90, 0.26);
-    background: rgba(246, 179, 90, 0.09);
-    color: #fde7bd;
+    font-family: var(--font-jost), system-ui, sans-serif;
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border: 1px solid rgba(217, 183, 121, 0.25);
+    background: transparent;
+    color: var(--taupe);
   }
 
   .night-photo-ring {
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.12),
-      0 0 34px rgba(255, 61, 129, 0.22);
+    box-shadow: 0 0 0 1px rgba(217, 183, 121, 0.28);
+  }
+
+  /* The like heart — the only red element on the room screen. Idle: taupe
+     outline on bordeaux. Liked: solid red. A slow fade, never a flashy pop. */
+  .heart-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    font-family: var(--font-jost), system-ui, sans-serif;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transition:
+      background 400ms ease,
+      color 400ms ease,
+      border-color 400ms ease;
+  }
+
+  .heart-idle {
+    background: var(--bordeaux);
+    color: var(--taupe);
+    border: 1px solid rgba(169, 143, 134, 0.45);
+  }
+
+  .heart-liked {
+    background: var(--red);
+    color: var(--cream);
+    border: 1px solid var(--red);
+  }
+
+  /* Match reveal = a curtain rising, not a jackpot. Slow fade, no bounce. */
+  .animate-curtain {
+    animation: curtain-rise 450ms ease-out both;
+  }
+}
+
+@keyframes curtain-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
