@@ -404,8 +404,8 @@ export default function MatchChatPage() {
   }
 
   return (
-    <main className="night-shell flex min-h-screen flex-col text-white">
-      <header className="night-content sticky top-0 z-10 border-b border-white/10 bg-[#070305]/80 px-4 py-4 backdrop-blur-xl">
+    <main className="night-shell flex min-h-screen flex-col text-cream">
+      <header className="night-content sticky top-0 z-10 border-b border-champagne/15 bg-velvet px-4 py-4">
         <div className="mx-auto flex max-w-3xl items-center gap-4">
           <Link
             href={`/v/${match.venue.slug}`}
@@ -420,8 +420,8 @@ export default function MatchChatPage() {
             className="night-photo-ring h-12 w-12 rounded-full object-cover"
           />
           <div className="min-w-0">
-            <h1 className="truncate text-xl font-black">{other.first_name}</h1>
-            <p className="truncate text-sm text-[#d9bbb1]">{s.expiresTonight}</p>
+            <h1 className="wordmark truncate text-xl font-semibold">{other.first_name}</h1>
+            <p className="truncate text-sm text-taupe">{s.expiresTonight}</p>
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <LanguageSelector />
@@ -457,15 +457,15 @@ export default function MatchChatPage() {
                 <p
                   className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     mine
-                      ? "bg-gradient-to-br from-[#f6b35a] via-[#ff7aa8] to-[#c084fc] text-[#120508] shadow-[0_14px_36px_rgba(255,61,129,0.22)]"
-                      : "border border-white/10 bg-white/10 text-[#fff7ed]"
+                      ? "bg-wine text-cream"
+                      : "border border-champagne/15 bg-bordeaux text-cream"
                   }`}
                 >
                   {message.body}
                 </p>
                 <time
                   dateTime={message.created_at}
-                  className="mt-1 px-2 text-[0.7rem] font-medium text-[#9f8a86]"
+                  className="mt-1 px-2 text-[0.7rem] font-medium text-taupe"
                 >
                   {timeFormatter.format(new Date(message.created_at))}
                 </time>
@@ -474,11 +474,11 @@ export default function MatchChatPage() {
           })
         )}
         {otherTyping && other && (
-          <div className="flex items-center gap-2 px-2 text-sm font-medium text-[#d9bbb1]">
+          <div className="flex items-center gap-2 px-2 text-sm font-medium text-taupe">
             <span className="flex gap-1">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#f6b35a]" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ff7aa8] [animation-delay:120ms]" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#c084fc] [animation-delay:240ms]" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-taupe" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-taupe [animation-delay:120ms]" />
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-taupe [animation-delay:240ms]" />
             </span>
             {s.typing(other.first_name)}
           </div>
@@ -488,7 +488,7 @@ export default function MatchChatPage() {
 
       <form
         onSubmit={sendMessage}
-        className="night-content sticky bottom-0 border-t border-white/10 bg-[#070305]/84 px-4 py-4 backdrop-blur-xl sm:px-5"
+        className="night-content sticky bottom-0 border-t border-champagne/15 bg-velvet px-4 py-4 sm:px-5"
       >
         <div className="mx-auto flex max-w-3xl gap-3">
           <input
@@ -500,31 +500,31 @@ export default function MatchChatPage() {
           />
           <button
             disabled={sending || draft.trim().length === 0}
-            className="night-button night-button-primary px-5 py-3 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-[#8b7773]"
+            className="night-button night-button-primary px-5 py-3 disabled:cursor-not-allowed disabled:border-bordeaux disabled:bg-bordeaux disabled:text-taupe"
           >
             {s.send}
           </button>
         </div>
         {errorMsg && (
-          <p className="mx-auto mt-3 max-w-3xl text-sm text-red-300">
+          <p className="mx-auto mt-3 max-w-3xl text-sm text-blush">
             {errorMsg}
           </p>
         )}
       </form>
 
       {reportOpen && other && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-velvet/85 px-6">
           <form
             onSubmit={submitReport}
             className="night-panel w-full max-w-sm rounded-[2rem] p-6"
           >
-            <h2 className="text-2xl font-black">
+            <h2 className="font-display text-2xl font-medium">
               {roomS.reportTitle(other.first_name)}
             </h2>
             {reportSubmitted ? (
               <>
-                <p className="mt-4 text-zinc-300">{roomS.reportSuccess}</p>
-                <p className="mt-2 text-sm text-zinc-500">
+                <p className="mt-4 text-taupe">{roomS.reportSuccess}</p>
+                <p className="mt-2 text-sm text-taupe">
                   {roomS.reportBlockPrompt}
                 </p>
                 <div className="mt-6 grid gap-3">
@@ -546,7 +546,7 @@ export default function MatchChatPage() {
               </>
             ) : (
               <>
-                <label className="mt-5 block text-sm font-semibold text-zinc-300">
+                <label className="mt-5 block text-sm font-medium text-taupe">
                   {roomS.reportReason}
                   <select
                     value={reportReason}
@@ -570,12 +570,13 @@ export default function MatchChatPage() {
                   className="night-input mt-4 h-28 resize-none px-4 py-3"
                 />
                 {errorMsg && (
-                  <p className="mt-3 text-sm text-red-400">{errorMsg}</p>
+                  <p className="mt-3 text-sm text-blush">{errorMsg}</p>
                 )}
                 <div className="mt-6 grid gap-3">
+                  {/* Safety action — never red. A cream-filled affirmative on bordeaux. */}
                   <button
                     type="submit"
-                    className="night-button night-button-primary px-5 py-3"
+                    className="night-button bg-cream px-5 py-3 text-ink"
                   >
                     {roomS.reportSubmit}
                   </button>
@@ -604,13 +605,13 @@ function Shell({
   tone?: "muted" | "error";
 }) {
   return (
-    <main className="night-shell flex min-h-screen items-center justify-center px-6 text-white">
+    <main className="night-shell flex min-h-screen items-center justify-center px-6 text-cream">
       <div className="fixed right-5 top-5 z-20">
         <LanguageSelector />
       </div>
       <div
         className={`night-content night-panel w-full max-w-md rounded-[2rem] p-8 text-center text-sm ${
-          tone === "error" ? "text-red-300" : "night-muted"
+          tone === "error" ? "text-blush" : "night-muted"
         }`}
       >
         {children}
