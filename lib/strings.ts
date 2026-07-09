@@ -92,11 +92,17 @@ type Dict = {
     entering: string;
     loadError: string;
     venueNotFound: string;
+    // The venue exists but is_live is false: the night has not started (or is
+    // over). The page reopens itself via realtime when the founder goes live.
+    closedTitle: string;
+    closedBody: string;
     // takes the venue name
     whosHere: (venue: string) => string;
     justArrived: string;
+    newArrivalCue: string;
     profileActions: string;
     roomActions: string;
+    editProfile: string;
     firstTimeHintTitle: string;
     firstTimeHintBody: string;
     firstTimeHintDismiss: string;
@@ -106,7 +112,6 @@ type Dict = {
     waitingTitle: string;
     waitingBody: string;
     polishProfile: string;
-    likeHint: string;
     like: string;
     liked: string;
     likeError: string;
@@ -139,11 +144,6 @@ type Dict = {
     reportSuccess: string;
     reportError: string;
     reportBlockPrompt: string;
-    promoTitle: string;
-    promoBody: string;
-    promoPrimary: string;
-    promoSecondary: string;
-    promoDismiss: string;
     reportReasons: {
       harassment: string;
       fake_profile: string;
@@ -221,23 +221,27 @@ export const t: Record<Locale, Dict> = {
       entering: "Walking into the room…",
       loadError: "Couldn't load the room. Anonymous sign-in may be disabled.",
       venueNotFound: "This venue doesn't exist.",
+      closedTitle: "The night hasn't started yet",
+      closedBody:
+        "This bar isn't live on Amourette right now. Come back when the night kicks off — this page will open on its own.",
       whosHere: (venue) => `Tonight at ${venue}`,
       justArrived: "Just arrived",
+      newArrivalCue: "Someone just arrived ↓",
       profileActions: "More actions",
       roomActions: "Room options",
+      editProfile: "Edit my profile",
       firstTimeHintTitle: "Tap quietly",
       firstTimeHintBody:
         "They only know if it is mutual. You stay in control of your attention.",
       firstTimeHintDismiss: "Got it",
       roomCount: (count) =>
         count === 1
-          ? "person in the room right now"
-          : "people in the room right now",
+          ? "person in the room right now — that's you"
+          : "people in the room right now, counting you",
       waitingTitle: "You're in",
       waitingBody:
         "The night is warming up. Put your phone away, enjoy your bar — check back in a bit.",
       polishProfile: "Polish your profile while the room fills",
-      likeHint: "Only revealed if it is mutual.",
       like: "Tap",
       liked: "Tapped",
       likeError: "Couldn't register your like. Try again.",
@@ -272,12 +276,6 @@ export const t: Record<Locale, Dict> = {
       reportSuccess: "Report submitted.",
       reportError: "Couldn't submit the report. Try again.",
       reportBlockPrompt: "Do you also want to block this person?",
-      promoTitle: "You've started",
-      promoBody:
-        "You just made your first move. Keep Amourette in your pocket for the next one.",
-      promoPrimary: "Download on the App Store",
-      promoSecondary: "Get it on Google Play",
-      promoDismiss: "Not now",
       reportReasons: {
         harassment: "Harassment",
         fake_profile: "Fake profile",
@@ -302,7 +300,7 @@ export const t: Record<Locale, Dict> = {
   fr: {
     landing: {
       welcome: "Dans la salle",
-      tagline: "Scanne. Tape. Commence ta soirée.",
+      tagline: "Scanne. Craque. Commence ta soirée.",
       settingUp: "On ouvre la salle…",
       sessionError:
         "Impossible de démarrer ta session. La connexion anonyme est peut-être désactivée.",
@@ -326,7 +324,7 @@ export const t: Record<Locale, Dict> = {
       ageTitle: "Confirme ton âge",
       ageSubtitle: "Bonne énergie seulement. Amourette est réservé aux adultes.",
       trustPills: [
-        "Taps discrets",
+        "Coups de cœur discrets",
         "Mutuel seulement",
         "Tu gardes le contrôle",
       ],
@@ -358,26 +356,30 @@ export const t: Record<Locale, Dict> = {
       loadError:
         "Impossible de charger la salle. La connexion anonyme est peut-être désactivée.",
       venueNotFound: "Ce lieu n'existe pas.",
+      closedTitle: "La soirée n'a pas encore commencé",
+      closedBody:
+        "Ce bar n'est pas encore ouvert sur Amourette ce soir. Reviens quand la soirée se lance — cette page s'ouvrira toute seule.",
       whosHere: (venue) => `Ce soir à ${venue}`,
       justArrived: "Vient d'arriver",
+      newArrivalCue: "Quelqu'un vient d'arriver ↓",
       profileActions: "Plus d'actions",
       roomActions: "Options de la salle",
-      firstTimeHintTitle: "Tape discrètement",
+      editProfile: "Modifier mon profil",
+      firstTimeHintTitle: "Craque discrètement",
       firstTimeHintBody:
         "La personne ne le sait que si c'est mutuel. Tu gardes le contrôle de ton attention.",
       firstTimeHintDismiss: "Compris",
       roomCount: (count) =>
         count > 1
-          ? "personnes dans la salle en ce moment"
-          : "personne dans la salle en ce moment",
+          ? "personnes dans la salle en ce moment, en te comptant"
+          : "personne dans la salle en ce moment — c'est toi",
       waitingTitle: "Tu es dedans",
       waitingBody:
         "La soirée se lance. Range ton téléphone, profite de ton bar — reviens voir dans un moment.",
       polishProfile: "Peaufine ton profil pendant que la salle se remplit",
-      likeHint: "Révélé seulement si c'est mutuel.",
-      like: "Taper",
-      liked: "Tapé",
-      likeError: "Impossible d'enregistrer ton like. Réessaie.",
+      like: "Craquer",
+      liked: "Craqué",
+      likeError: "Ton coup de cœur n'a pas pu être enregistré. Réessaie.",
       leave: "Quitter la soirée",
       goInvisible: "Passer invisible",
       invisibleTitle: "Tu es invisible",
@@ -387,7 +389,7 @@ export const t: Record<Locale, Dict> = {
       visibilityError: "Impossible de changer ta visibilité. Réessaie.",
       matchKicker: "Énergie mutuelle",
       matchBody:
-        "Vous avez tous les deux tapé. Reste léger, respectueux, et dans le moment.",
+        "Vous avez craqué l'un pour l'autre. Reste léger, respectueux, et dans le moment.",
       matchDismiss: "Voir qui est là",
       leftTitle: "Tu as quitté la salle",
       leftBody: "Tu n'es plus visible ici. Reviens quand tu veux.",
@@ -396,7 +398,7 @@ export const t: Record<Locale, Dict> = {
       openChat: "Démarrer le chat",
       activeMatches: "Conversations",
       conversationHint:
-        "Les taps mutuels vivent ici. Reste chaleureux, puis va dire bonjour.",
+        "Les coups de cœur mutuels vivent ici. Reste chaleureux, puis va dire bonjour.",
       openConversation: (name) => `Ouvrir la conversation avec ${name}`,
       block: "Bloquer",
       blockConfirm: (name) =>
@@ -411,12 +413,6 @@ export const t: Record<Locale, Dict> = {
       reportSuccess: "Signalement envoyé.",
       reportError: "Impossible d'envoyer le signalement. Réessaie.",
       reportBlockPrompt: "Veux-tu aussi bloquer cette personne ?",
-      promoTitle: "Tu as commencé",
-      promoBody:
-        "Tu viens de faire ton premier pas. Garde Amourette dans ta poche pour le suivant.",
-      promoPrimary: "Télécharger sur l'App Store",
-      promoSecondary: "Disponible sur Google Play",
-      promoDismiss: "Plus tard",
       reportReasons: {
         harassment: "Harcèlement",
         fake_profile: "Faux profil",
@@ -441,7 +437,7 @@ export const t: Record<Locale, Dict> = {
   es: {
     landing: {
       welcome: "Dentro de la sala",
-      tagline: "Escanea. Toca. Empieza tu noche.",
+      tagline: "Escanea. Flecha. Empieza tu noche.",
       settingUp: "Abriendo la sala…",
       sessionError:
         "No se pudo iniciar tu sesión. Puede que el inicio anónimo esté desactivado.",
@@ -464,7 +460,7 @@ export const t: Record<Locale, Dict> = {
       tonightAt: (venue) => `Esta noche en ${venue}`,
       ageTitle: "Confirma tu edad",
       ageSubtitle: "Solo buena energía. Amourette es para adultos.",
-      trustPills: ["Toques discretos", "Solo mutuo", "Tú tienes el control"],
+      trustPills: ["Flechazos discretos", "Solo mutuo", "Tú tienes el control"],
       addPhoto: "Añadir foto",
       firstName: "Nombre",
       bioOptional: "Bio (opcional)",
@@ -493,26 +489,30 @@ export const t: Record<Locale, Dict> = {
       loadError:
         "No se pudo cargar la sala. Puede que el inicio anónimo esté desactivado.",
       venueNotFound: "Este lugar no existe.",
+      closedTitle: "La noche aún no ha empezado",
+      closedBody:
+        "Este bar todavía no está abierto en Amourette esta noche. Vuelve cuando arranque la noche — esta página se abrirá sola.",
       whosHere: (venue) => `Esta noche en ${venue}`,
       justArrived: "Acaba de llegar",
+      newArrivalCue: "Alguien acaba de llegar ↓",
       profileActions: "Más acciones",
       roomActions: "Opciones de la sala",
-      firstTimeHintTitle: "Toca discretamente",
+      editProfile: "Editar mi perfil",
+      firstTimeHintTitle: "Flecha con discreción",
       firstTimeHintBody:
         "Solo lo sabrán si es mutuo. Tú controlas tu atención.",
       firstTimeHintDismiss: "Entendido",
       roomCount: (count) =>
         count === 1
-          ? "persona en la sala ahora mismo"
-          : "personas en la sala ahora mismo",
+          ? "persona en la sala ahora mismo — eres tú"
+          : "personas en la sala ahora mismo, contándote a ti",
       waitingTitle: "Ya estás dentro",
       waitingBody:
         "La noche está arrancando. Guarda el teléfono, disfruta de tu bar — vuelve a mirar en un rato.",
       polishProfile: "Pule tu perfil mientras la sala se llena",
-      likeHint: "Solo se revela si es mutuo.",
-      like: "Tocar",
-      liked: "Tocado",
-      likeError: "No se pudo registrar tu toque. Inténtalo de nuevo.",
+      like: "Flechar",
+      liked: "Flechado",
+      likeError: "No se pudo registrar tu flechazo. Inténtalo de nuevo.",
       leave: "Salir por esta noche",
       goInvisible: "Pasar a invisible",
       invisibleTitle: "Estás invisible",
@@ -520,9 +520,9 @@ export const t: Record<Locale, Dict> = {
         "No eres visible en esta sala y la exploración se pausa hasta que vuelvas.",
       becomeVisible: "Volver a ser visible",
       visibilityError: "No se pudo cambiar tu visibilidad. Inténtalo de nuevo.",
-      matchKicker: "Energía mutua",
+      matchKicker: "Flechazo mutuo",
       matchBody:
-        "Ambos se tocaron. Manténlo ligero, respetuoso y en el momento.",
+        "Os habéis flechado. Manténlo ligero, respetuoso y en el momento.",
       matchDismiss: "Ver quién más está aquí",
       leftTitle: "Has salido de la sala",
       leftBody: "Ya no eres visible aquí. Vuelve cuando quieras.",
@@ -531,7 +531,7 @@ export const t: Record<Locale, Dict> = {
       openChat: "Iniciar el chat",
       activeMatches: "Conversaciones",
       conversationHint:
-        "Los toques mutuos viven aquí. Manténlo cálido y luego ve a saludar.",
+        "Los flechazos mutuos viven aquí. Manténlo cálido y luego ve a saludar.",
       openConversation: (name) => `Abrir conversación con ${name}`,
       block: "Bloquear",
       blockConfirm: (name) =>
@@ -546,12 +546,6 @@ export const t: Record<Locale, Dict> = {
       reportSuccess: "Reporte enviado.",
       reportError: "No se pudo enviar el reporte. Inténtalo de nuevo.",
       reportBlockPrompt: "¿También quieres bloquear a esta persona?",
-      promoTitle: "Has empezado",
-      promoBody:
-        "Acabas de dar tu primer paso. Lleva Amourette en el bolsillo para el siguiente.",
-      promoPrimary: "Descargar en App Store",
-      promoSecondary: "Disponible en Google Play",
-      promoDismiss: "Ahora no",
       reportReasons: {
         harassment: "Acoso",
         fake_profile: "Perfil falso",
