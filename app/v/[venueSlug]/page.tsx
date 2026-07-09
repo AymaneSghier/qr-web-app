@@ -1,11 +1,17 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { ensureVenueSession } from "@/lib/auth";
-import { APP_STORE_URL, GOOGLE_PLAY_URL } from "@/lib/config";
 import { isMutuallyCompatible } from "@/lib/profile";
 import { browserLocale, localeForCity, t } from "@/lib/strings";
 import {
@@ -23,14 +29,21 @@ type PublicProfile = Pick<
 >;
 const PUBLIC_COLUMNS = "id, first_name, photo_url, bio, gender, interested_in";
 
-// A room candidate is a public profile plus a "just arrived" cue, computed at
-// fetch time (render must stay pure). The feed is ordered by arrival (newest
-// first) so it never reshuffles under the thumb.
-type Candidate = PublicProfile & { justArrived: boolean };
+// A room candidate is a public profile plus its check-in time. "Just arrived"
+// is computed at fetch time (render must stay pure) and re-derived on a slow
+// interval so the tag expires even in a quiet room. The feed is ordered by
+// arrival (oldest first): new people append at the bottom, so the list never
+// reshuffles under the thumb.
+type Candidate = PublicProfile & { checkedInAt: string; justArrived: boolean };
 
 type Venue = Pick<
   Database["public"]["Tables"]["venues"]["Row"],
-  "id" | "name" | "city"
+  "id" | "name" | "city" | "is_live"
+>;
+
+type PresenceChange = Pick<
+  Database["public"]["Tables"]["presence"]["Row"],
+  "left_at" | "is_visible"
 >;
 
 type MatchRow = Pick<
@@ -64,10 +77,15 @@ const HEARTBEAT_MS = 120_000;
 // A candidate checked in within this window gets a "just arrived" tag —
 // arrivals are the heartbeat of the room, they should be felt.
 const JUST_ARRIVED_MS = 10 * 60_000;
-const PROMO_DISMISS_KEY = "paramour-promo-dismissed";
+// Coalesce realtime presence bursts into a single room reload.
+const PRESENCE_REFETCH_THROTTLE_MS = 2_500;
+// While the venue is closed, poll is_live slowly as the realtime fallback.
+const CLOSED_POLL_MS = 30_000;
 const ROOM_HINT_DISMISS_KEY = "paramour-room-hint-dismissed";
 
-type Status = "loading" | "ready" | "error" | "left" | "invisible";
+// "closed" = the venue exists but is_live is false: the night has not started,
+// or the founder ended it. The screen reopens itself when the switch flips.
+type Status = "loading" | "ready" | "error" | "left" | "invisible" | "closed";
 
 function readMarkerKey(matchId: string) {
   return `paramour-chat-read:${matchId}`;
@@ -115,7 +133,10 @@ export default function VenueRoom() {
   const [reportReason, setReportReason] = useState<ReportReason>("harassment");
   const [reportNote, setReportNote] = useState("");
   const [reportSubmitted, setReportSubmitted] = useState(false);
-  const [showPromo, setShowPromo] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [arrivalCue, setArrivalCue] = useState(false);
+  // Bumped to re-run the bootstrap (the closed screen reopening the room).
+  const [bootNonce, setBootNonce] = useState(0);
   const [status, setStatus] = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState("");
   const [showRoomHint, setShowRoomHint] = useState(
@@ -133,25 +154,33 @@ export default function VenueRoom() {
   );
   const s = t[locale].room;
 
-  // Keep the latest "me" available to realtime callbacks without resubscribing.
+  // Keep the latest "me"/status available to realtime callbacks without
+  // resubscribing.
   const meRef = useRef<PublicProfile | null>(null);
+  const statusRef = useRef<Status>("loading");
   const matchIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     meRef.current = me;
   }, [me]);
   useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+  useEffect(() => {
     matchIdsRef.current = new Set(matches.map((match) => match.id));
   }, [matches]);
 
-  function dismissPromo() {
-    window.localStorage.setItem(PROMO_DISMISS_KEY, "1");
-    setShowPromo(false);
-  }
-
-  function maybeShowPromoAfterLike() {
-    if (window.localStorage.getItem(PROMO_DISMISS_KEY) === "1") return;
-    setShowPromo(true);
-  }
+  // The feed's scroll container plus what it takes to keep the profile under
+  // the thumb in place across list changes (see the anchoring layout effect).
+  const feedRef = useRef<HTMLDivElement | null>(null);
+  const feedIdsRef = useRef<string[]>([]);
+  const anchorIdRef = useRef<string | null>(null);
+  const arrivalCueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (arrivalCueTimerRef.current) clearTimeout(arrivalCueTimerRef.current);
+    },
+    []
+  );
 
   function dismissRoomHint() {
     window.localStorage.setItem(ROOM_HINT_DISMISS_KEY, "1");
@@ -169,8 +198,8 @@ export default function VenueRoom() {
 
   // Who is checked in here right now and mutually compatible with me. Scoped to
   // active presence (left_at IS NULL) — this is the live room, not the user table.
-  // Ordered by check-in time (newest first) so the feed is stable across
-  // refetches: arrivals land on top, nobody reshuffles mid-scroll.
+  // Ordered by check-in time (oldest first) so the feed is stable across
+  // refetches: arrivals append at the bottom, nobody reshuffles mid-scroll.
   const loadCandidates = useCallback(
     async (venueId: string, myId: string, myProfile: PublicProfile) => {
       const { data } = await supabase
@@ -179,10 +208,11 @@ export default function VenueRoom() {
         .eq("venue_id", venueId)
         .is("left_at", null)
         .neq("profile_id", myId)
-        .order("checked_in_at", { ascending: false });
+        .order("checked_in_at", { ascending: true });
       const now = Date.now();
       const profiles = (data ?? []).map((row) => ({
         ...(row.profiles as unknown as PublicProfile),
+        checkedInAt: row.checked_in_at,
         justArrived: now - Date.parse(row.checked_in_at) < JUST_ARRIVED_MS,
       }));
       return profiles.filter((p) => isMutuallyCompatible(myProfile, p));
@@ -205,6 +235,43 @@ export default function VenueRoom() {
     return count;
   }, []);
 
+  // Active matches for this venue night plus their unread counts. Shared by
+  // the bootstrap and every resync (foreground return, realtime re-subscribe).
+  const loadMatches = useCallback(
+    async (venueId: string, myId: string) => {
+      const { data: matchRows } = await supabase
+        .from("matches")
+        .select("id, profile_a, profile_b, expires_at")
+        .eq("venue_id", venueId)
+        .gt("expires_at", new Date().toISOString());
+      const activeMatches = (
+        await Promise.all(
+          ((matchRows ?? []) as MatchRow[]).map(async (m) => {
+            const otherId = m.profile_a === myId ? m.profile_b : m.profile_a;
+            const other = await loadProfileById(otherId);
+            return other ? { id: m.id, other } : null;
+          })
+        )
+      ).filter((m): m is ActiveMatch => m !== null);
+      const matchIds = activeMatches.map((match) => match.id);
+      const { data: messageRows } =
+        matchIds.length > 0
+          ? await supabase
+              .from("messages")
+              .select("match_id, sender_id, created_at")
+              .in("match_id", matchIds)
+          : { data: [] };
+      return {
+        matches: activeMatches,
+        unread: countUnreadMessages(
+          (messageRows ?? []) as RoomMessage[],
+          myId
+        ),
+      };
+    },
+    [loadProfileById]
+  );
+
   const registerMatch = useCallback((match: ActiveMatch, reveal: boolean) => {
     setMatchedIds((prev) => {
       if (prev.has(match.other.id)) return prev;
@@ -218,6 +285,36 @@ export default function VenueRoom() {
     if (reveal) setNewMatch((current) => current ?? match);
   }, []);
 
+  // Full resync of the live room. Realtime drips changes while the tab is up,
+  // but after a background stint or a websocket drop we don't replay missed
+  // events — we just re-photograph the room. A match that landed while we were
+  // away still gets its reveal.
+  const resyncRoom = useCallback(async () => {
+    const myProfile = meRef.current;
+    if (!venue || !myProfile) return;
+    if (statusRef.current !== "ready" && statusRef.current !== "invisible") {
+      return;
+    }
+    const [nextCandidates, count, matchState] = await Promise.all([
+      statusRef.current === "ready"
+        ? loadCandidates(venue.id, myProfile.id, myProfile)
+        : Promise.resolve<Candidate[]>([]),
+      loadRoomCount(venue.id),
+      loadMatches(venue.id, myProfile.id),
+    ]);
+    if (statusRef.current === "ready") setCandidates(nextCandidates);
+    setRoomCount(count);
+    const newlyMatched = matchState.matches.filter(
+      (match) => !matchIdsRef.current.has(match.id)
+    );
+    setMatches(matchState.matches);
+    setMatchedIds(new Set(matchState.matches.map((m) => m.other.id)));
+    setUnreadByMatchId(matchState.unread);
+    if (newlyMatched.length > 0) {
+      setNewMatch((current) => current ?? newlyMatched[0]);
+    }
+  }, [venue, loadCandidates, loadRoomCount, loadMatches]);
+
   // Bootstrap: session, profile, venue, check-in, then the live room state.
   useEffect(() => {
     let active = true;
@@ -227,7 +324,7 @@ export default function VenueRoom() {
 
         const { data: venueRow, error: venueError } = await supabase
           .from("venues")
-          .select("id, name, city")
+          .select("id, name, city, is_live")
           .eq("slug", venueSlug)
           .maybeSingle();
         if (venueError) throw venueError;
@@ -237,6 +334,15 @@ export default function VenueRoom() {
           setErrorMsg(
             t[preferredLocale(browserLocale())].room.venueNotFound
           );
+          return;
+        }
+
+        setVenue(venueRow);
+
+        // The venue exists but the night is not on. Show the closed screen —
+        // it reopens itself when the founder flips the live switch.
+        if (!venueRow.is_live) {
+          setStatus("closed");
           return;
         }
 
@@ -261,18 +367,25 @@ export default function VenueRoom() {
         }
 
         setMe(myProfile);
-        setVenue(venueRow);
 
         // Scanning the QR = checking in. This must land before we read other
         // profiles: the tightened RLS only lets you see who shares your room.
         const { data: presenceRow, error: checkInError } = await supabase.rpc("check_in", {
           p_venue_id: venueRow.id,
         });
-        if (checkInError) throw checkInError;
+        if (checkInError) {
+          // Race: the founder flipped the venue off between our venue read and
+          // the check-in. Same closed screen as the is_live gate above.
+          if (checkInError.message?.includes("venue not live")) {
+            if (active) setStatus("closed");
+            return;
+          }
+          throw checkInError;
+        }
         if (!active) return;
         const isVisible = presenceRow?.is_visible ?? true;
 
-        const [candidatesData, roomCountData, { data: myLikes }, { data: myMatches }] =
+        const [candidatesData, roomCountData, { data: myLikes }, matchState] =
           await Promise.all([
             isVisible
               ? loadCandidates(venueRow.id, user.id, myProfile)
@@ -283,40 +396,16 @@ export default function VenueRoom() {
               .select("liked_id")
               .eq("venue_id", venueRow.id)
               .gt("expires_at", new Date().toISOString()),
-            supabase
-              .from("matches")
-              .select("id, profile_a, profile_b, expires_at")
-              .eq("venue_id", venueRow.id)
-              .gt("expires_at", new Date().toISOString()),
+            loadMatches(venueRow.id, user.id),
           ]);
         if (!active) return;
-
-        const activeMatches = (
-          await Promise.all(
-            ((myMatches ?? []) as MatchRow[]).map(async (m) => {
-              const otherId = m.profile_a === user.id ? m.profile_b : m.profile_a;
-              const other = await loadProfileById(otherId);
-              return other ? { id: m.id, other } : null;
-            })
-          )
-        ).filter((m): m is ActiveMatch => m !== null);
-        const matchIds = activeMatches.map((match) => match.id);
-        const { data: messageRows } =
-          matchIds.length > 0
-            ? await supabase
-                .from("messages")
-                .select("match_id, sender_id, created_at")
-                .in("match_id", matchIds)
-            : { data: [] };
 
         setCandidates(candidatesData);
         setRoomCount(roomCountData);
         setLikedIds(new Set((myLikes ?? []).map((l) => l.liked_id)));
-        setMatches(activeMatches);
-        setUnreadByMatchId(
-          countUnreadMessages((messageRows ?? []) as RoomMessage[], user.id)
-        );
-        setMatchedIds(new Set(activeMatches.map((m) => m.other.id)));
+        setMatches(matchState.matches);
+        setUnreadByMatchId(matchState.unread);
+        setMatchedIds(new Set(matchState.matches.map((m) => m.other.id)));
         setStatus(isVisible ? "ready" : "invisible");
       } catch (e) {
         console.error(e);
@@ -329,27 +418,106 @@ export default function VenueRoom() {
     return () => {
       active = false;
     };
-  }, [venueSlug, router, loadProfileById, loadCandidates, loadRoomCount]);
+  }, [venueSlug, router, loadProfileById, loadCandidates, loadRoomCount, loadMatches, bootNonce]);
 
   // Heartbeat: keep our presence fresh while the room is open and the tab is
-  // visible. check_in is idempotent — it just bumps last_seen_at.
+  // visible. check_in is idempotent — it just bumps last_seen_at. Coming back
+  // to the foreground also resyncs the whole room: a phone in a bar spends
+  // most of the night locked, and the realtime socket dies in the pocket.
   useEffect(() => {
     if (!venue || (status !== "ready" && status !== "invisible")) return;
     const beat = () => supabase.rpc("check_in", { p_venue_id: venue.id });
     const id = setInterval(beat, HEARTBEAT_MS);
     const onVisible = () => {
-      if (document.visibilityState === "visible") beat();
+      if (document.visibilityState !== "visible") return;
+      beat();
+      resyncRoom();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [venue, status]);
+  }, [venue, status, resyncRoom]);
 
-  // Realtime: the room fills and empties as people check in / leave.
+  // The room opens and closes itself with the venue's live switch: on the
+  // closed screen we watch venues.is_live and re-run the bootstrap the moment
+  // a founder starts the night (plus a slow poll as the realtime fallback);
+  // in the room, the switch turning off drops everyone to the closed screen.
+  useEffect(() => {
+    if (!venue) return;
+    const reopen = () => {
+      setStatus("loading");
+      setBootNonce((nonce) => nonce + 1);
+    };
+    const channel = supabase
+      .channel(`venue-live-${venue.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "venues",
+          filter: `id=eq.${venue.id}`,
+        },
+        (payload) => {
+          const live = (payload.new as { is_live?: boolean }).is_live;
+          if (live && statusRef.current === "closed") reopen();
+          if (
+            live === false &&
+            (statusRef.current === "ready" || statusRef.current === "invisible")
+          ) {
+            setStatus("closed");
+          }
+        }
+      )
+      .subscribe();
+    const poll = setInterval(async () => {
+      if (statusRef.current !== "closed") return;
+      const { data } = await supabase
+        .from("venues")
+        .select("is_live")
+        .eq("id", venue.id)
+        .maybeSingle();
+      if (data?.is_live && statusRef.current === "closed") reopen();
+    }, CLOSED_POLL_MS);
+    return () => {
+      clearInterval(poll);
+      supabase.removeChannel(channel);
+    };
+  }, [venue]);
+
+  // Realtime: the room fills and empties as people check in / leave. Pure
+  // heartbeats (only last_seen_at moved) are skipped — presence has REPLICA
+  // IDENTITY FULL so the old row tells us whether anything visible changed;
+  // otherwise 30 phones beating every 2 minutes means a full room reload every
+  // few seconds on every client. A short trailing throttle coalesces arrival
+  // bursts, and a re-subscribe after a socket drop triggers a full resync.
   useEffect(() => {
     if (!venue || !me || status !== "ready") return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let lastRefetch = 0;
+    const refetch = async () => {
+      lastRefetch = Date.now();
+      const [next, count] = await Promise.all([
+        loadCandidates(venue.id, me.id, me),
+        loadRoomCount(venue.id),
+      ]);
+      setCandidates(next);
+      setRoomCount(count);
+    };
+    const scheduleRefetch = () => {
+      if (timer) return;
+      const wait = Math.max(
+        0,
+        lastRefetch + PRESENCE_REFETCH_THROTTLE_MS - Date.now()
+      );
+      timer = setTimeout(() => {
+        timer = null;
+        refetch();
+      }, wait);
+    };
+    let wasSubscribed = false;
     const channel = supabase
       .channel(`presence-${venue.id}`)
       .on(
@@ -360,24 +528,39 @@ export default function VenueRoom() {
           table: "presence",
           filter: `venue_id=eq.${venue.id}`,
         },
-        async () => {
-          const [next, count] = await Promise.all([
-            loadCandidates(venue.id, me.id, me),
-            loadRoomCount(venue.id),
-          ]);
-          setCandidates(next);
-          setRoomCount(count);
+        (payload) => {
+          if (payload.eventType === "UPDATE") {
+            const before = payload.old as Partial<PresenceChange>;
+            const after = payload.new as PresenceChange;
+            // Pure heartbeat: nothing the room can see changed. (Before the
+            // replica-identity migration lands, `old` only carries the PK, the
+            // comparison fails open and we refetch — the safe fallback.)
+            if (
+              "left_at" in before &&
+              before.left_at === after.left_at &&
+              before.is_visible === after.is_visible
+            ) {
+              return;
+            }
+          }
+          scheduleRefetch();
         }
       )
-      .subscribe();
+      .subscribe((subscribeState) => {
+        if (subscribeState !== "SUBSCRIBED") return;
+        if (wasSubscribed) resyncRoom();
+        wasSubscribed = true;
+      });
     return () => {
+      if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
     };
-  }, [venue, me, status, loadCandidates, loadRoomCount]);
+  }, [venue, me, status, loadCandidates, loadRoomCount, resyncRoom]);
 
   // Realtime: a match unlocks the moment a reciprocal like lands (for either side).
   useEffect(() => {
     if (!venue) return;
+    let wasSubscribed = false;
     const channel = supabase
       .channel(`matches-${venue.id}`)
       .on(
@@ -398,12 +581,16 @@ export default function VenueRoom() {
           if (other) registerMatch({ id: m.id, other }, true);
         }
       )
-      .subscribe();
+      .subscribe((subscribeState) => {
+        if (subscribeState !== "SUBSCRIBED") return;
+        if (wasSubscribed) resyncRoom();
+        wasSubscribed = true;
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [venue, loadProfileById, registerMatch]);
+  }, [venue, loadProfileById, registerMatch, resyncRoom]);
 
   // Realtime: show a small unread badge when a new message lands in one of my
   // active conversations. This reduces uncertainty without adding read receipts.
@@ -412,6 +599,7 @@ export default function VenueRoom() {
       return;
     }
 
+    let wasSubscribed = false;
     const channel = supabase
       .channel(`room-messages-${me.id}`)
       .on(
@@ -438,12 +626,80 @@ export default function VenueRoom() {
           }));
         }
       )
-      .subscribe();
+      .subscribe((subscribeState) => {
+        if (subscribeState !== "SUBSCRIBED") return;
+        if (wasSubscribed) resyncRoom();
+        wasSubscribed = true;
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [matches.length, me, status]);
+  }, [matches.length, me, status, resyncRoom]);
+
+  // Re-derive "just arrived" once a minute so tags expire even in a quiet room
+  // (the clock is only read in callbacks — render stays pure).
+  useEffect(() => {
+    if (status !== "ready") return;
+    const id = setInterval(() => {
+      const now = Date.now();
+      setCandidates((prev) => {
+        let changed = false;
+        const next = prev.map((candidate) => {
+          const fresh =
+            now - Date.parse(candidate.checkedInAt) < JUST_ARRIVED_MS;
+          if (fresh === candidate.justArrived) return candidate;
+          changed = true;
+          return { ...candidate, justArrived: fresh };
+        });
+        return changed ? next : prev;
+      });
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [status]);
+
+  // Scroll anchoring: when the list changes (someone above the thumb leaves,
+  // someone new appends below), keep the profile currently in view exactly in
+  // place — the feed must never move under the thumb — and cue fresh arrivals
+  // instead of letting anything shift.
+  const visibleFeedKey = candidates
+    .filter((c) => !matchedIds.has(c.id))
+    .map((c) => c.id)
+    .join("|");
+  useLayoutEffect(() => {
+    const ids = visibleFeedKey ? visibleFeedKey.split("|") : [];
+    const prevIds = feedIdsRef.current;
+    feedIdsRef.current = ids;
+    const el = feedRef.current;
+    if (!el || el.clientHeight === 0) return;
+    const anchorId = anchorIdRef.current;
+    if (anchorId) {
+      const idx = ids.indexOf(anchorId);
+      if (idx >= 0) {
+        const top = idx * el.clientHeight;
+        if (Math.abs(el.scrollTop - top) > 2) el.scrollTop = top;
+      }
+    }
+    if (prevIds.length > 0 && ids.some((id) => !prevIds.includes(id))) {
+      setArrivalCue(true);
+      if (arrivalCueTimerRef.current) clearTimeout(arrivalCueTimerRef.current);
+      arrivalCueTimerRef.current = setTimeout(() => setArrivalCue(false), 5_000);
+    }
+  }, [visibleFeedKey]);
+
+  // Remember which profile is under the thumb; the anchoring effect restores it.
+  function handleFeedScroll() {
+    const el = feedRef.current;
+    if (!el || el.clientHeight === 0) return;
+    const index = Math.round(el.scrollTop / el.clientHeight);
+    anchorIdRef.current = feedIdsRef.current[index] ?? null;
+  }
+
+  function jumpToNewestArrival() {
+    const el = feedRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    setArrivalCue(false);
+  }
 
   async function like(candidate: PublicProfile) {
     if (!me || !venue) return;
@@ -476,8 +732,6 @@ export default function VenueRoom() {
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
     if (match) registerMatch({ id: match.id, other: candidate }, true);
-
-    maybeShowPromoAfterLike();
   }
 
   async function blockProfile(profile: PublicProfile) {
@@ -637,6 +891,20 @@ export default function VenueRoom() {
     );
   }
 
+  if (status === "closed") {
+    // The venue is real but the night is not on. This screen reopens itself:
+    // the venues watcher re-runs the bootstrap when is_live flips.
+    return (
+      <Shell>
+        <p className="night-kicker">{venue?.name ?? ""}</p>
+        <h2 className="font-display mt-4 text-2xl font-medium">
+          {s.closedTitle}
+        </h2>
+        <p className="night-muted mt-3 leading-relaxed">{s.closedBody}</p>
+      </Shell>
+    );
+  }
+
   if (status === "left") {
     return (
       <Shell>
@@ -700,10 +968,9 @@ export default function VenueRoom() {
                       className="flex items-center gap-3"
                       aria-label={s.openConversation(match.other.first_name)}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <ProfilePhoto
                         src={match.other.photo_url}
-                        alt={match.other.first_name}
+                        name={match.other.first_name}
                         className="night-photo-ring h-12 w-12 rounded-full object-cover"
                       />
                       <span>
@@ -741,7 +1008,20 @@ export default function VenueRoom() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <LanguageSelector />
+            {/* Your own door back to your profile — always one tap away. */}
+            {me && (
+              <Link
+                href={profilePath}
+                aria-label={s.editProfile}
+                className="shrink-0 transition hover:opacity-80"
+              >
+                <ProfilePhoto
+                  src={me.photo_url}
+                  name={me.first_name}
+                  className="night-photo-ring h-9 w-9 rounded-full object-cover"
+                />
+              </Link>
+            )}
             <div className="relative">
               <button
                 type="button"
@@ -758,6 +1038,7 @@ export default function VenueRoom() {
                     onClick={() => setRoomMenuOpen(false)}
                   />
                   <div className="night-panel absolute right-0 z-20 mt-2 grid w-52 gap-2 p-2">
+                    <LanguageSelector className="justify-center" />
                     <button
                       type="button"
                       onClick={() => {
@@ -799,10 +1080,9 @@ export default function VenueRoom() {
                   aria-label={s.openConversation(match.other.first_name)}
                 >
                   <span className="relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <ProfilePhoto
                       src={match.other.photo_url}
-                      alt={match.other.first_name}
+                      name={match.other.first_name}
                       className="night-photo-ring h-9 w-9 rounded-full object-cover"
                     />
                     {(unreadByMatchId[match.id] ?? 0) > 0 && (
@@ -893,21 +1173,34 @@ export default function VenueRoom() {
         ) : (
           /* One profile per viewport: recognition, not evaluation. Scrolling
              past someone stores and shows nothing — you can always come back. */
-          <div className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain">
+          <div
+            ref={feedRef}
+            onScroll={handleFeedScroll}
+            className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain"
+          >
             {visible.map((c) => {
               const liked = likedIds.has(c.id);
+              const expanded = expandedId === c.id;
               return (
                 <section
                   key={c.id}
+                  onClick={() =>
+                    c.bio &&
+                    setExpandedId((current) => (current === c.id ? null : c.id))
+                  }
                   className="relative h-full snap-start snap-always overflow-hidden"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <ProfilePhoto
                     src={c.photo_url}
-                    alt={c.first_name}
+                    name={c.first_name}
                     className="absolute inset-0 h-full w-full object-cover"
+                    initialClassName="text-7xl"
                   />
                   <div className="feed-scrim absolute inset-0" />
+                  {/* Reading the full bio deserves a calmer photo behind it. */}
+                  {expanded && (
+                    <div className="absolute inset-0 bg-velvet/55 transition-opacity" />
+                  )}
                   <div className="absolute inset-x-0 top-0 flex items-start justify-between p-4">
                     {c.justArrived ? (
                       <span className="night-pill rounded-full bg-velvet/60 px-3 py-1.5">
@@ -940,12 +1233,23 @@ export default function VenueRoom() {
                       {c.first_name}
                     </h2>
                     {c.bio && (
-                      <p className="mt-2 text-sm leading-relaxed text-taupe">
+                      // Clamped by default so a long bio can never push the
+                      // heart off-screen; tap anywhere on the card to unfold.
+                      <p
+                        className={`mt-2 text-sm leading-relaxed ${
+                          expanded
+                            ? "max-h-[45dvh] overflow-y-auto whitespace-pre-line text-cream"
+                            : "line-clamp-2 text-taupe"
+                        }`}
+                      >
                         {c.bio}
                       </p>
                     )}
                     <button
-                      onClick={() => like(c)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        like(c);
+                      }}
                       disabled={liked}
                       aria-label={liked ? s.liked : s.like}
                       className={`heart-button mt-5 w-full px-5 py-4 text-sm ${
@@ -957,13 +1261,23 @@ export default function VenueRoom() {
                       </span>
                       {liked ? s.liked : s.like}
                     </button>
-                    <p className="mt-2 text-center text-xs font-medium text-taupe">
-                      {s.likeHint}
-                    </p>
                   </div>
                 </section>
               );
             })}
+          </div>
+        )}
+
+        {/* Someone new appended below: a cue, never a shift under the thumb. */}
+        {arrivalCue && !showRoomHint && visible.length > 0 && (
+          <div className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center">
+            <button
+              type="button"
+              onClick={jumpToNewestArrival}
+              className="night-pill pointer-events-auto rounded-full bg-velvet/70 px-3 py-1.5 backdrop-blur"
+            >
+              {s.newArrivalCue}
+            </button>
           </div>
         )}
 
@@ -995,11 +1309,11 @@ export default function VenueRoom() {
         <div className="animate-curtain fixed inset-0 z-50 flex flex-col items-center justify-center bg-red-deep px-6 text-center text-cream">
           <p className="wordmark text-2xl text-cream">Amourette</p>
           <p className="night-kicker mt-8 text-blush">{s.matchKicker}</p>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <ProfilePhoto
             src={newMatch.other.photo_url}
-            alt={newMatch.other.first_name}
+            name={newMatch.other.first_name}
             className="mx-auto mt-6 h-32 w-32 rounded-full object-cover shadow-[0_0_0_1px_rgba(244,235,225,0.5)]"
+            initialClassName="text-4xl"
           />
           <h2 className="wordmark mt-6 text-5xl font-medium italic text-cream">
             {newMatch.other.first_name}
@@ -1104,45 +1418,56 @@ export default function VenueRoom() {
         </div>
       )}
 
-      {showPromo && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-velvet/85 px-6">
-          <div className="night-panel w-full max-w-md rounded-[2rem] p-7">
-            <p className="wordmark text-xl text-cream">Amourette</p>
-            <h2 className="font-display mt-3 text-3xl font-medium">{s.promoTitle}</h2>
-            <p className="mt-3 text-taupe">{s.promoBody}</p>
-            <div className="mt-7 grid gap-3">
-              <a
-                href={APP_STORE_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="night-button night-button-primary px-5 py-3 text-center"
-              >
-                {s.promoPrimary}
-              </a>
-              <a
-                href={GOOGLE_PLAY_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="night-button night-button-secondary px-5 py-3 text-center"
-              >
-                {s.promoSecondary}
-              </a>
-              <button
-                type="button"
-                onClick={dismissPromo}
-                className="night-button px-5 py-3 text-center text-sm text-taupe transition hover:text-cream"
-              >
-                {s.promoDismiss}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
 
 type RoomStrings = (typeof t)["en"]["room"];
+
+// A profile photo that can never be a broken full-screen image: on load error
+// it falls back to the person's initial on bordeaux. Lazy by default — the
+// whole feed is in the DOM and off-screen full-res photos must not all load
+// at once on bar wifi.
+function ProfilePhoto({
+  src,
+  name,
+  className,
+  initialClassName = "text-xl",
+}: {
+  src: string;
+  name: string;
+  className: string;
+  initialClassName?: string;
+}) {
+  // Failure is remembered per URL: a new src (profile edit, different person)
+  // automatically retries, with no effect or reset needed.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc === src;
+
+  if (failed) {
+    return (
+      <div
+        aria-label={name}
+        className={`${className} flex items-center justify-center bg-bordeaux`}
+      >
+        <span className={`font-display text-taupe ${initialClassName}`}>
+          {name.charAt(0).toUpperCase()}
+        </span>
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={name}
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailedSrc(src)}
+      className={className}
+    />
+  );
+}
 
 // Report/block live behind this ⋯ trigger: one tap opens a small action sheet,
 // so safety stays immediately reachable (women-first) without every profile
@@ -1170,7 +1495,12 @@ function ProfileActions({
       <button
         type="button"
         aria-label={s.profileActions}
-        onClick={onToggle}
+        // stopPropagation: on a feed card the surrounding section's tap
+        // toggles the bio — safety actions must never double as that.
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggle();
+        }}
         className={
           compact
             ? "flex h-7 w-7 items-center justify-center rounded-full text-base leading-none text-taupe transition hover:text-cream"
@@ -1182,7 +1512,10 @@ function ProfileActions({
       {open && (
         <div
           className="fixed inset-0 z-40 flex items-end justify-center bg-velvet/70 px-5 pb-8"
-          onClick={onToggle}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggle();
+          }}
         >
           <div
             className="night-panel w-full max-w-sm p-4"
