@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { ensureAnonSession } from "@/lib/auth";
+import { ensureVenueSession } from "@/lib/auth";
 import { APP_STORE_URL, GOOGLE_PLAY_URL } from "@/lib/config";
 import { isMutuallyCompatible } from "@/lib/profile";
 import { browserLocale, localeForCity, t } from "@/lib/strings";
@@ -223,7 +223,7 @@ export default function VenueRoom() {
     let active = true;
     (async () => {
       try {
-        const user = await ensureAnonSession();
+        const user = await ensureVenueSession(venueSlug);
 
         const { data: venueRow, error: venueError } = await supabase
           .from("venues")
