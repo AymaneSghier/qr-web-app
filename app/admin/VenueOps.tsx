@@ -7,6 +7,7 @@
 // policy; new venues start dark (is_live=false) until a founder presses Start.
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import QRCode from "qrcode";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/database.types";
@@ -81,33 +82,6 @@ export function VenueOps() {
       setError(`Could not ${venue.is_live ? "stop" : "start"} ${venue.name}.`);
     } else {
       await load();
-    }
-    setBusyId(null);
-  }
-
-  async function openVenueRoom(venue: Venue) {
-    const tab = window.open("about:blank", "_blank", "noopener,noreferrer");
-    setBusyId(venue.id);
-    setError("");
-
-    if (!venue.is_live) {
-      const { error: rpcError } = await supabase.rpc("set_venue_live", {
-        p_venue_id: venue.id,
-        p_live: true,
-      });
-      if (rpcError) {
-        tab?.close();
-        setError(`Could not start ${venue.name}.`);
-        setBusyId(null);
-        return;
-      }
-      await load();
-    }
-
-    if (tab) {
-      tab.location.href = `/v/${venue.slug}`;
-    } else {
-      window.open(`/v/${venue.slug}`, "_blank", "noopener,noreferrer");
     }
     setBusyId(null);
   }
@@ -224,18 +198,14 @@ export function VenueOps() {
                     </div>
 
                     <div className="flex flex-wrap gap-2 lg:justify-end">
-                      <button
-                        type="button"
-                        disabled={busyId === venue.id}
-                        onClick={() => openVenueRoom(venue)}
+                      <Link
+                        href={`/v/${venue.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
                         className="night-button night-button-secondary px-3 py-2 text-xs"
                       >
-                        {busyId === venue.id
-                          ? "Opening..."
-                          : venue.is_live
-                            ? "Open room"
-                            : "Open venue"}
-                      </button>
+                        Open room
+                      </Link>
                       <button
                         type="button"
                         onClick={() => copyVenueUrl(venue)}
