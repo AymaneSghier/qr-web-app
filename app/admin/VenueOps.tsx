@@ -224,8 +224,8 @@ export function VenueOps() {
                         {busyId === venue.id
                           ? "Working…"
                           : venue.is_live
-                            ? "Stop room"
-                            : "Start room"}
+                            ? "Close room to users"
+                            : "Open room to users"}
                       </button>
                     </div>
                   </div>
