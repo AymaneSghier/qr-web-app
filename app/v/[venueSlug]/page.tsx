@@ -38,8 +38,11 @@ type Candidate = PublicProfile & { checkedInAt: string; justArrived: boolean };
 
 type Venue = Pick<
   Database["public"]["Tables"]["venues"]["Row"],
-  "id" | "name" | "city" | "is_live"
+  "id" | "name" | "city" | "is_live" | "profile_preview_enabled"
 >;
+
+type PreviewProfileRow =
+  Database["public"]["Functions"]["preview_room_profiles"]["Returns"][number];
 
 type PresenceChange = Pick<
   Database["public"]["Tables"]["presence"]["Row"],
@@ -204,7 +207,12 @@ export default function VenueRoom() {
   // Ordered by check-in time (oldest first) so the feed is stable across
   // refetches: arrivals append at the bottom, nobody reshuffles mid-scroll.
   const loadCandidates = useCallback(
-    async (venueId: string, myId: string, myProfile: PublicProfile) => {
+    async (
+      venueId: string,
+      myId: string,
+      myProfile: PublicProfile,
+      profilePreviewEnabled: boolean
+    ) => {
       const { data } = await supabase
         .from("presence")
         .select(`checked_in_at, profiles!inner(${PUBLIC_COLUMNS})`)
@@ -218,7 +226,26 @@ export default function VenueRoom() {
         checkedInAt: row.checked_in_at,
         justArrived: now - Date.parse(row.checked_in_at) < JUST_ARRIVED_MS,
       }));
-      return profiles.filter((p) => isMutuallyCompatible(myProfile, p));
+      const compatibleProfiles = profiles.filter((p) =>
+        isMutuallyCompatible(myProfile, p)
+      );
+      if (compatibleProfiles.length > 0 || !profilePreviewEnabled) {
+        return compatibleProfiles;
+      }
+
+      const { data: previewRows } = await supabase.rpc("preview_room_profiles", {
+        p_venue_id: venueId,
+      });
+      return ((previewRows ?? []) as PreviewProfileRow[]).map((profile) => ({
+        id: profile.id,
+        first_name: profile.first_name,
+        photo_url: profile.photo_url,
+        bio: profile.bio,
+        gender: profile.gender,
+        interested_in: profile.interested_in,
+        checkedInAt: profile.profile_created_at,
+        justArrived: false,
+      }));
     },
     []
   );
@@ -300,7 +327,12 @@ export default function VenueRoom() {
     }
     const [nextCandidates, count, matchState] = await Promise.all([
       statusRef.current === "ready"
-        ? loadCandidates(venue.id, myProfile.id, myProfile)
+        ? loadCandidates(
+            venue.id,
+            myProfile.id,
+            myProfile,
+            venue.profile_preview_enabled
+          )
         : Promise.resolve<Candidate[]>([]),
       loadRoomCount(venue.id),
       loadMatches(venue.id, myProfile.id),
@@ -327,7 +359,7 @@ export default function VenueRoom() {
 
         const { data: venueRow, error: venueError } = await supabase
           .from("venues")
-          .select("id, name, city, is_live")
+          .select("id, name, city, is_live, profile_preview_enabled")
           .eq("slug", venueSlug)
           .maybeSingle();
         if (venueError) throw venueError;
@@ -398,7 +430,12 @@ export default function VenueRoom() {
         const [candidatesData, roomCountData, { data: myLikes }, matchState] =
           await Promise.all([
             isVisible
-              ? loadCandidates(venueRow.id, user.id, myProfile)
+              ? loadCandidates(
+                  venueRow.id,
+                  user.id,
+                  myProfile,
+                  venueRow.profile_preview_enabled
+                )
               : Promise.resolve([]),
             loadRoomCount(venueRow.id),
             supabase
@@ -471,7 +508,22 @@ export default function VenueRoom() {
           filter: `id=eq.${venue.id}`,
         },
         (payload) => {
-          const live = (payload.new as { is_live?: boolean }).is_live;
+          const nextVenue = payload.new as {
+            is_live?: boolean;
+            profile_preview_enabled?: boolean;
+          };
+          const live = nextVenue.is_live;
+          if (typeof nextVenue.profile_preview_enabled === "boolean") {
+            setVenue((current) =>
+              current
+                ? {
+                    ...current,
+                    profile_preview_enabled: nextVenue.profile_preview_enabled!,
+                  }
+                : current
+            );
+            if (statusRef.current === "ready") reopen();
+          }
           if (live && statusRef.current === "closed") reopen();
           if (
             live === false &&
@@ -510,7 +562,7 @@ export default function VenueRoom() {
     const refetch = async () => {
       lastRefetch = Date.now();
       const [next, count] = await Promise.all([
-        loadCandidates(venue.id, me.id, me),
+        loadCandidates(venue.id, me.id, me, venue.profile_preview_enabled),
         loadRoomCount(venue.id),
       ]);
       setCandidates(next);
@@ -860,7 +912,7 @@ export default function VenueRoom() {
       return;
     }
     const [nextCandidates, count] = await Promise.all([
-      loadCandidates(venue.id, me.id, me),
+      loadCandidates(venue.id, me.id, me, venue.profile_preview_enabled),
       loadRoomCount(venue.id),
     ]);
     setCandidates(nextCandidates);
@@ -892,7 +944,7 @@ export default function VenueRoom() {
       return;
     }
     const [nextCandidates, count] = await Promise.all([
-      loadCandidates(venue.id, me.id, me),
+      loadCandidates(venue.id, me.id, me, venue.profile_preview_enabled),
       loadRoomCount(venue.id),
     ]);
     setCandidates(nextCandidates);

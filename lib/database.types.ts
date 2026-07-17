@@ -390,6 +390,7 @@ export type Database = {
           id: string
           is_live: boolean
           name: string
+          profile_preview_enabled: boolean
           slug: string
           timezone: string
         }
@@ -399,6 +400,7 @@ export type Database = {
           id?: string
           is_live?: boolean
           name: string
+          profile_preview_enabled?: boolean
           slug: string
           timezone?: string
         }
@@ -408,6 +410,7 @@ export type Database = {
           id?: string
           is_live?: boolean
           name?: string
+          profile_preview_enabled?: boolean
           slug?: string
           timezone?: string
         }
@@ -524,9 +527,40 @@ export type Database = {
       record_chat_started: { Args: { p_match_id: string }; Returns: undefined }
       record_existing_match_events: { Args: never; Returns: number }
       record_venue_scan: { Args: { p_venue_id: string }; Returns: undefined }
+      preview_room_profiles: {
+        Args: { p_venue_id: string }
+        Returns: {
+          bio: string | null
+          first_name: string
+          gender: string
+          id: string
+          interested_in: string[]
+          photo_url: string
+          profile_created_at: string
+        }[]
+      }
       restore_to_venue: {
         Args: { p_profile_id: string; p_venue_id: string }
         Returns: undefined
+      }
+      set_venue_profile_preview: {
+        Args: { p_enabled: boolean; p_venue_id: string }
+        Returns: {
+          city: string | null
+          created_at: string
+          id: string
+          is_live: boolean
+          name: string
+          profile_preview_enabled: boolean
+          slug: string
+          timezone: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "venues"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       set_venue_live: {
         Args: { p_live: boolean; p_venue_id: string }
@@ -536,6 +570,7 @@ export type Database = {
           id: string
           is_live: boolean
           name: string
+          profile_preview_enabled: boolean
           slug: string
           timezone: string
         }

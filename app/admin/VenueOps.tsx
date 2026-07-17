@@ -3,8 +3,10 @@
 // Venue ops — list/create venues, toggle live, and get each venue's QR. This is
 // what a real night needs (it overlaps Bloc 5). is_live is never flipped by a
 // raw UPDATE: start/stop goes through the set_venue_live() RPC so stopping also
-// empties the room atomically. Creating a venue uses the venues_insert_admin
-// policy; new venues start dark (is_live=false) until a founder presses Start.
+// empties the room atomically. Profile preview is a founder-only test override
+// for cold starts, and is reset when the room closes. Creating a venue uses the
+// venues_insert_admin policy; new venues start dark (is_live=false) until a
+// founder presses Start.
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import QRCode from "qrcode";
@@ -13,7 +15,13 @@ import type { Database } from "@/lib/database.types";
 
 type Venue = Pick<
   Database["public"]["Tables"]["venues"]["Row"],
-  "id" | "slug" | "name" | "city" | "timezone" | "is_live"
+  | "id"
+  | "slug"
+  | "name"
+  | "city"
+  | "timezone"
+  | "is_live"
+  | "profile_preview_enabled"
 >;
 
 const TIMEZONE_OPTIONS = [
@@ -38,6 +46,7 @@ export function VenueOps() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [qr, setQr] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -53,7 +62,7 @@ export function VenueOps() {
   const load = useCallback(async () => {
     const { data, error: loadError } = await supabase
       .from("venues")
-      .select("id, slug, name, city, timezone, is_live")
+      .select("id, slug, name, city, timezone, is_live, profile_preview_enabled")
       .order("name");
     if (loadError) {
       setError("Could not load venues.");
@@ -73,13 +82,62 @@ export function VenueOps() {
   async function toggleLive(venue: Venue) {
     setBusyId(venue.id);
     setError("");
+    setActionMessage("");
+    const nextLive = !venue.is_live;
     const { error: rpcError } = await supabase.rpc("set_venue_live", {
       p_venue_id: venue.id,
-      p_live: !venue.is_live,
+      p_live: nextLive,
     });
     if (rpcError) {
-      setError(`Could not ${venue.is_live ? "stop" : "start"} ${venue.name}.`);
+      setError(
+        `Could not ${venue.is_live ? "close" : "open"} ${venue.name}: ${
+          rpcError.message
+        }`
+      );
     } else {
+      setVenues((prev) =>
+        prev.map((item) =>
+          item.id === venue.id ? { ...item, is_live: nextLive } : item
+        )
+      );
+      setActionMessage(
+        nextLive
+          ? `${venue.name} is open. Users can enter the room now.`
+          : `${venue.name} is closed. New users cannot enter the room.`
+      );
+      await load();
+    }
+    setBusyId(null);
+  }
+
+  async function toggleProfilePreview(venue: Venue) {
+    setBusyId(venue.id);
+    setError("");
+    setActionMessage("");
+    const nextEnabled = !venue.profile_preview_enabled;
+    const { error: rpcError } = await supabase.rpc("set_venue_profile_preview", {
+      p_venue_id: venue.id,
+      p_enabled: nextEnabled,
+    });
+    if (rpcError) {
+      setError(
+        `Could not ${nextEnabled ? "show" : "hide"} completed profiles for ${
+          venue.name
+        }: ${rpcError.message}`
+      );
+    } else {
+      setVenues((prev) =>
+        prev.map((item) =>
+          item.id === venue.id
+            ? { ...item, profile_preview_enabled: nextEnabled }
+            : item
+        )
+      );
+      setActionMessage(
+        nextEnabled
+          ? `${venue.name} will show completed profiles when the room feed is empty.`
+          : `${venue.name} is back to the normal waiting flow.`
+      );
       await load();
     }
     setBusyId(null);
@@ -152,6 +210,11 @@ export function VenueOps() {
           </button>
         </div>
         {error && <p className="mb-3 text-sm text-red-300">{error}</p>}
+        {actionMessage && (
+          <p className="mb-3 text-sm font-medium text-blush">
+            {actionMessage}
+          </p>
+        )}
         {loading ? (
           <p className="night-muted">Loading…</p>
         ) : (
@@ -185,6 +248,11 @@ export function VenueOps() {
                         >
                           {venue.is_live ? "Live" : "Dark"}
                         </span>
+                        {venue.profile_preview_enabled && (
+                          <span className="night-pill rounded-full px-3 py-1 text-blush">
+                            Profile preview
+                          </span>
+                        )}
                       </div>
                       <div className="night-muted mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
                         <span>/{venue.slug}</span>
@@ -214,6 +282,18 @@ export function VenueOps() {
                       <button
                         type="button"
                         disabled={busyId === venue.id}
+                        onClick={() => toggleProfilePreview(venue)}
+                        className="night-button night-button-secondary px-4 py-2 text-xs disabled:opacity-60"
+                      >
+                        {busyId === venue.id
+                          ? "Working…"
+                          : venue.profile_preview_enabled
+                            ? "Hide completed profiles"
+                            : "Show completed profiles to users"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyId === venue.id}
                         onClick={() => toggleLive(venue)}
                         className={`night-button px-4 py-2 text-xs disabled:opacity-60 ${
                           venue.is_live
@@ -224,8 +304,8 @@ export function VenueOps() {
                         {busyId === venue.id
                           ? "Working…"
                           : venue.is_live
-                            ? "Stop room"
-                            : "Start room"}
+                            ? "Close room to users"
+                            : "Open room to users"}
                       </button>
                     </div>
                   </div>
