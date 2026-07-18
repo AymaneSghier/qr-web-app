@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { ensureAnonSession } from "@/lib/auth";
-import { trackEvent } from "@/lib/analytics";
 import { DEV_DEFAULT_VENUE_SLUG } from "@/lib/config";
 import { type Gender } from "@/lib/profile";
 import { browserLocale, t } from "@/lib/strings";
@@ -50,8 +49,6 @@ export default function Home() {
       try {
         const user = await ensureAnonSession();
         if (!active) return;
-        void trackEvent("session_started");
-        void trackEvent("landing_viewed");
 
         const { data: profileRow, error: profileError } = await supabase
           .from("profiles")
