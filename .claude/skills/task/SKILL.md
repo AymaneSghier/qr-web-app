@@ -39,7 +39,10 @@ a field is genuinely ambiguous.
 - **Priority:** `P0`/`P1`/`P2` — set only if the user signals urgency; otherwise leave
   unset.
 - **Status:** a fresh capture stays `Inbox`. Only move it to `Ready`/`Backlog` when the
-  user is triaging, not just capturing.
+  user is triaging, not just capturing. One exception: a `question` draft goes straight
+  to `Backlog` (that is where open questions live, out of the daily view but in the
+  Questions view) — unless the user flags it urgent/blocking, then leave it in `Inbox`
+  so it stays visible.
 
 The full-spec path also works: if the user hands you Kind/Area/Owner/Priority
 explicitly, use those verbatim and skip inference.
