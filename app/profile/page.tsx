@@ -230,7 +230,7 @@ export default function ProfilePage() {
         return setMessage(s.genericError);
       }
 
-      router.replace("/");
+      router.replace(targetVenueName ? targetRoomPath : "/");
       return;
     }
 

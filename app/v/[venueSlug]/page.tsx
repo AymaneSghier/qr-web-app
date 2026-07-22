@@ -1077,6 +1077,9 @@ export default function VenueRoom() {
 
   const visible = candidates.filter((c) => !matchedIds.has(c.id));
   const profilePath = `/profile?venue=${encodeURIComponent(venueSlug)}`;
+  // The "polish your profile" CTA is for an already-onboarded user, so it must
+  // open the editor (edit=1); without it, /profile bounces straight back here.
+  const polishPath = `/profile?edit=1&venue=${encodeURIComponent(venueSlug)}`;
 
   return (
     <main className="night-shell flex h-dvh min-h-0 flex-col text-cream">
@@ -1238,7 +1241,7 @@ export default function VenueRoom() {
               <p className="night-muted mt-3 leading-relaxed">{s.waitingBody}</p>
               <div className="mt-7 grid gap-3">
                 <Link
-                  href={profilePath}
+                  href={polishPath}
                   className="night-button night-button-secondary px-5 py-3 text-center text-xs"
                 >
                   {s.polishProfile}
