@@ -103,11 +103,12 @@ Two things to note about the columns:
 onboarding`. A security audit is `Kind: chore` + `Area: platform`. Read `Kind` as
 "what sort of work" and `Area` as "which part of the product".
 
-### Owner — who takes it
+### Assignee — who takes it
 
-`Marwane` or `Aymane`. Ownership is **per-item, not per-area** — `Area` is only a
-filter, it does not assign anyone. An unowned item is grabbable; the person who picks
-it up sets themselves as Owner.
+The native GitHub **`Assignee`** (`Marwane` or `Aymane`), so each person's avatar shows
+on the card and it works on both issues and draft items. Ownership is **per-item, not
+per-area** — `Area` is only a filter, it does not assign anyone. An unassigned item is
+grabbable; the person who picks it up assigns themselves.
 
 ### Priority — how urgent
 
@@ -121,7 +122,7 @@ decides it matters; not every item needs a priority.
 You drive the workflow with three skills. They work identically under Claude Code and
 Codex — say the slash command to either agent.
 
-- **`/task`** — *capture*. Give it a title; it infers `Kind`/`Area`/`Owner`/`Priority`
+- **`/task`** — *capture*. Give it a title; it infers `Kind`/`Area`/`Assignee`/`Priority`
   from what you said, decides whether it should be a real issue (actionable, will get a
   branch) or a draft item (a question/idea/op), creates it, and sets the fields. You
   can also hand it the full spec explicitly. This is how anything gets onto the board.
@@ -143,7 +144,7 @@ CAPTURE → TRIAGE → START → WORK → SHIP → REVIEW → MERGE → CLEANUP
 ```
 
 1. **Capture** — `/task` (or a new GitHub issue) lands the item in `Inbox`.
-2. **Triage** — set `Kind`/`Area`/`Owner`/`Priority` and move it to `Ready` (on the fly
+2. **Triage** — set `Kind`/`Area`/`Assignee`/`Priority` and move it to `Ready` (on the fly
    or at the weekly). This is a human decision.
 3. **Start** — `/standup` first: clear the other founder's ready PRs, then grab a
    `Ready` item that is yours. When you tell the agent to start it, the agent cuts a
@@ -243,7 +244,7 @@ put those PRs in front of you.
 - **Daily:** open with `/standup`, clear pending reviews, pick a `Ready` item, branch,
   build, `/ship`. Capture anything new that surfaces with `/task` the moment you think
   of it, so it never lives only in your head.
-- **Weekly:** a triage pass over the board — drain `Inbox` (set `Kind`/`Area`/`Owner`/
+- **Weekly:** a triage pass over the board — drain `Inbox` (set `Kind`/`Area`/`Assignee`/
   `Priority`, move real work to `Ready` or `Backlog`), revisit open `question` items,
   and sanity-check priorities. This is also when raw ideas either become `Ready` work
   or get dropped.
