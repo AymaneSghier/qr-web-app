@@ -1,6 +1,6 @@
 ---
 name: standup
-description: Start-of-work briefing for the Amourette repo. Use when the user says /standup, standup, catch me up, where are we, what changed, or begins a work session. Reports what merged into main, new decisions, active branches, and remaining issues, then offers to clean up merged local branches. Read-only except the optional cleanup, which always confirms first. Works the same under Claude Code and Codex.
+description: Start-of-work briefing for the Amourette repo. Use when the user says /standup, standup, catch me up, where are we, what changed, or begins a work session. Reports what merged into main, new decisions, active branches, the other founder's open PRs, and remaining work on the shared project board, then offers to clean up merged local branches. Read-only except the optional cleanup, which always confirms first. Works the same under Claude Code and Codex.
 ---
 
 # Standup
@@ -17,10 +17,17 @@ that always confirms first.
    decision the other founder logged does not get missed.
 3. **Branches.** Local and remote active branches. Flag new ones, ones that drifted
    behind `main`, and ones whose upstream is gone (merged and deletable).
-4. **Remaining work.** Open issues, sorted **by ownership first** (assigned to you,
-   then unassigned and grabbable, then the other founder's, collapsed), and **by
-   area label** within each group (`gh issue list`). If the GitHub Project board is
-   not set up yet, say so and skip this section instead of erroring.
+4. **The other founder's open PRs.** List open PRs awaiting your review
+   (`gh pr list --state open`). Prompt to clear these *before* starting new work: on
+   an async two-timezone team, merging what is ready first keeps `main` moving and
+   avoids conflicts. Agreed start-of-session ritual, not optional.
+5. **Remaining work — the board is the source of truth.** Read the shared GitHub
+   Project (`gh project item-list 1 --owner getamourette`, board at
+   https://github.com/orgs/getamourette/projects/1). Surface what needs attention:
+   **In review** items waiting on you, then **In progress**, then **Ready**, plus the
+   **Inbox** pile to triage. Sort **by Owner** (yours first, then grabbable, then the
+   other founder's collapsed) and **by Area** within each group. If the board is
+   unreachable, fall back to `gh issue list` and say so.
 
 Present it clearly: short scannable sections, not a wall of text.
 

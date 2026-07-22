@@ -31,6 +31,10 @@ push what you have. It does the right thing whether or not a PR already exists.
    (`gh pr create --draft --base main --fill`), linking the issue with `Closes #N`.
    The draft PR is the shared radar with the other founder, open it early rather than
    at the end. If the user only wants to push WIP with no PR, stop after the push.
+6. **Board.** The issue for this work lives on the shared project board
+   (https://github.com/orgs/getamourette/projects/1); move it to **In review** when
+   the PR opens. Because the PR closes the issue (`Closes #N`), merging later
+   auto-moves the item to **Done**. If the work has no board item yet, add one.
 
 ## Never
 

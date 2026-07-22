@@ -68,6 +68,17 @@ Work flows **issue → branch → PR → squash-merge → delete branch**, off `
 - **Squash and merge, then delete the branch.** Keeps `main` history at one commit per PR and the branch list clean.
 - **Do not let PRs pile up.** An open PR gets reviewed and merged quickly; a stack of long-lived branches against a moving `main` is how avoidable conflicts and schema drift appear.
 - **Agents never merge a PR or apply a migration to the shared DB on their own.** An agent writes the code and the migration file and opens the PR; merging and applying to the remote stay founder-gated.
+- **Clear the other founder's open PRs before starting new work.** On an async two-timezone team, the first thing you do in a session is review and merge what is ready (that is `standup`'s job), so `main` keeps moving and long-lived branches do not accumulate. Reviewing the other's PR is not busywork; it is the guard-rail against schema drift.
+
+### Task tracking (the board is the source of truth)
+
+The **GitHub Project `Amourette`** (org `getamourette`, https://github.com/orgs/getamourette/projects/1) is the single shared source of truth for remaining work. If it is not on the board, it is not tracked. `roadmap.md` is the narrative layer (blocs, the *why*) and points at the board; it does not duplicate task lists. Each founder's personal to-do tool is private scratch that *feeds* the board, never authoritative for shared work.
+
+- **Everything shared lives here, not just code:** bugs, features, design, infra, and non-code ops (marketing, legal, business) — the board is the one place both founders look, so a task with nowhere else to live goes here with `Area: ops`.
+- **Fields:** `Status` (Inbox → Backlog → Ready → In progress → In review → Done), `Kind` (bug/feature/design/infra/question/chore), `Area` (onboarding/room/match-chat/safety/admin/landing/ops), `Owner`, `Priority`. Ownership is per-item (`Owner`), not per-area — `Area` is only a filter.
+- **New items land in `Inbox`** (auto-added from the repo) and get triaged (Kind/Area/Owner/Priority) on the fly or at the weekly. `In review` means a PR is open awaiting the other founder's eyes.
+- **Draft item vs real issue:** questions, raw ideas, and non-code ops start as **draft items** (no repo noise). Convert to a **real issue** the moment someone picks it up and needs a branch/PR (so `Closes #N` links the work).
+- **Questions belong on the board** (`Kind: question`, surfaced in the "Questions" view) so they are shared, not carried in one founder's head. A resolved question becomes a task *or* a `docs/decisions.md` entry, then its item is closed.
 
 ### Supabase: how the DB is managed (read before any schema work)
 
