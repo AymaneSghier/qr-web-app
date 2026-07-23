@@ -101,6 +101,7 @@ export default function MatchChatPage() {
   const [blockNote, setBlockNote] = useState("");
   const [otherTyping, setOtherTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(
     null
   );
@@ -278,6 +279,21 @@ export default function MatchChatPage() {
     };
   }, []);
 
+  // Close the ⋯ menu on any tap outside it. A backdrop div can't be trusted
+  // here: the header's backdrop-blur makes `position: fixed` resolve against the
+  // header box, not the viewport, so a fixed overlay would miss taps in the
+  // thread. A pointerdown listener is stacking-context-proof (covers touch).
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onPointerDown(event: PointerEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [menuOpen]);
+
   function broadcastTyping(typing: boolean) {
     if (!me || !typingChannelRef.current) return;
     typingChannelRef.current.send({
@@ -437,25 +453,45 @@ export default function MatchChatPage() {
   }
 
   return (
-    <main className="night-shell flex min-h-screen flex-col text-cream">
-      {/* Ambient depth: a soft warm glow low (light off the counter) and a
-          whisper of grain — the ground reads as a bar at night, never a flat
-          fill. No pattern, no colour: discretion stays (docs/design.md). */}
+    // Exactly one dynamic-viewport tall (dvh, not vh — iOS browser chrome makes
+    // 100vh overflow, which pushed the composer off-screen). The thread is the
+    // only scroller; header and composer are always on screen, one page.
+    <main className="night-shell flex h-[100dvh] flex-col overflow-hidden text-cream">
+      {/* Ambient depth so the ground reads as a bar at night, never a flat
+          fill: a warm ember rising from the composer, a wine glow up top, a
+          vignette deepening the edges, and a whisper of grain. No pattern, no
+          second hue — discretion stays (docs/design.md). */}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0"
         style={{
           background:
-            "radial-gradient(85% 42% at 50% 108%, rgba(var(--wine-rgb),0.16), transparent 70%)",
+            "radial-gradient(95% 55% at 50% 112%, rgba(216,180,170,0.10), rgba(var(--wine-rgb),0.22) 38%, transparent 74%)",
         }}
       />
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0"
-        style={{ opacity: 0.05, backgroundImage: GRAIN_URL }}
+        style={{
+          background:
+            "radial-gradient(80% 45% at 50% -8%, rgba(var(--wine-rgb),0.20), transparent 60%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            "radial-gradient(120% 88% at 50% 42%, transparent 52%, rgba(var(--velvet-rgb),0.55))",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{ opacity: 0.06, backgroundImage: GRAIN_URL }}
       />
 
-      <header className="night-content sticky top-0 z-20 border-b border-champagne/15 bg-velvet/85 px-4 py-3 backdrop-blur">
+      <header className="night-content z-20 shrink-0 border-b border-champagne/15 bg-velvet/85 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <Link
             href={`/v/${match.venue.slug}`}
@@ -482,47 +518,46 @@ export default function MatchChatPage() {
           </div>
 
           {/* Single overflow menu: safety (blush, never red) then language.
-              Keeps the header calm; closes on any outside tap. */}
-          <div className="relative ml-auto shrink-0">
+              Keeps the header calm; closes on any outside tap (see effect). */}
+          <div ref={menuRef} className="relative ml-auto shrink-0">
             <button
               type="button"
               aria-label={roomS.roomActions}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
               onClick={() => setMenuOpen((open) => !open)}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-champagne/25 bg-velvet/60 text-lg leading-none text-cream backdrop-blur"
             >
               ⋯
             </button>
             {menuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                <div className="night-panel absolute right-0 z-50 mt-2 grid w-56 gap-2 p-2">
-                  <p className="px-2 pt-1 font-label text-[10px] uppercase tracking-[0.2em] text-taupe">
-                    {other.first_name}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={openReport}
-                    className="night-button night-button-danger px-4 py-3 text-xs"
-                  >
-                    {roomS.report}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={openBlock}
-                    className="night-button night-button-danger px-4 py-3 text-xs"
-                  >
-                    {roomS.block}
-                  </button>
-                  <hr className="hairline my-1" />
-                  <LanguageSelector className="justify-center" />
-                </div>
-              </>
+              <div className="night-panel absolute right-0 z-50 mt-2 grid w-56 gap-2 p-2">
+                <p className="px-2 pt-1 font-label text-[10px] uppercase tracking-[0.2em] text-taupe">
+                  {other.first_name}
+                </p>
+                <button
+                  type="button"
+                  onClick={openReport}
+                  className="night-button night-button-danger px-4 py-3 text-xs"
+                >
+                  {roomS.report}
+                </button>
+                <button
+                  type="button"
+                  onClick={openBlock}
+                  className="night-button night-button-danger px-4 py-3 text-xs"
+                >
+                  {roomS.block}
+                </button>
+                <hr className="hairline my-1" />
+                <LanguageSelector className="justify-center" />
+              </div>
             )}
           </div>
         </div>
       </header>
 
-      <section className="night-content mx-auto flex w-full max-w-3xl flex-1 flex-col gap-[14px] px-4 pb-6 pt-5 sm:px-5">
+      <section className="night-content mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto px-4 pb-6 pt-5 sm:px-5">
         {/* The opener, once at the top: the reveal echo + the ephemeral, said
             softly and only here (no banner, no popup). */}
         <div className="animate-curtain mx-auto mb-2 max-w-[88%] text-center">
@@ -589,7 +624,7 @@ export default function MatchChatPage() {
 
       <form
         onSubmit={sendMessage}
-        className="night-content sticky bottom-0 z-20 border-t border-cream/[0.06] bg-velvet/80 px-4 py-4 backdrop-blur sm:px-5"
+        className="night-content z-20 shrink-0 border-t border-cream/[0.06] bg-velvet/80 px-4 py-4 backdrop-blur sm:px-5"
       >
         <div className="mx-auto flex max-w-3xl items-center gap-[10px]">
           <input
