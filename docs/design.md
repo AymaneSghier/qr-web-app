@@ -247,6 +247,19 @@ Buttons, tags, the ♥, reveal CTAs = pill.
   ≤ .5. The only gold. One per screen max.
 - **Safety UI (report, block, invisible):** never red — red is love. Blush/cream
   on bordeaux; "alert red" does not exist.
+- **Match chat surface (#73):** the chat is a trigger to talk IRL, not a place to
+  live in, so it stays calm and gets out of the way. Header: back chevron +
+  ringed avatar + first name (Fraunces italic) + **one** presence signal (red
+  live-dot + "In the room"; no "now" — the dot says it) + a single `⋯` menu
+  folding Report/Block (blush) and language. A pinned opener at the top of the
+  thread says it once and softly ("You both tapped." + "Over a drink"), carrying
+  the ephemeral without a banner or a popup. **Bubbles are sober**: mine on
+  `bordeaux-warm`, received on `bordeaux-deep`, cream text, timestamps both sides
+  (Jost, taupe) — no red/wine fill (a coloured "my" bubble dilutes the accent).
+  Ambient ground (ember from the composer + wine glow + vignette + grain), never
+  a flat fill. One dynamic-viewport page: only the thread scrolls, the composer
+  is always visible above the iOS browser bar (`visualViewport` height + `cover`
+  safe-area padding).
 - **Voice:** complicit, sober, informal ("tu"). Short. Promise the real: "She's
   in the room, right now." No gamification (score, streak).
 
@@ -314,8 +327,9 @@ Remaining:
 1. Translate the two locked hero mockups into real React components — the room
    feed card first, then the match reveal — rendering states/variants and
    choosing before freezing (mockups in `docs/brand/explorations/`).
-2. Apply the system to the four existing screens (landing, profile, room,
-   chat) — one PR per screen, founder's call.
+2. Apply the system to the existing screens — one PR per screen, founder's call.
+   Done: room (#69/#83), match reveal (#70), **chat (#73)**. Remaining: landing,
+   profile.
 3. The wordmark/logo pass (separate, reopens the Bodoni wordmark; the wax-seal
    app-icon idea).
 4. Separate chore: rename **Paramour → Amourette** across UI copy / docs

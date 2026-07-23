@@ -201,6 +201,9 @@ type Dict = {
     send: string;
     sendError: string;
     closed: string;
+    presence: string;
+    openerTitle: string;
+    openerNote: string;
   };
 };
 
@@ -374,6 +377,9 @@ export const t: Record<Locale, Dict> = {
       send: "Send",
       sendError: "Couldn't send your message. Try again.",
       closed: "This match has expired for the night.",
+      presence: "In the room",
+      openerTitle: "You both tapped.",
+      openerNote: "Over a drink",
     },
   },
   fr: {
@@ -546,6 +552,9 @@ export const t: Record<Locale, Dict> = {
       send: "Envoyer",
       sendError: "Impossible d'envoyer ton message. Réessaie.",
       closed: "Ce match a expiré pour la soirée.",
+      presence: "Dans la salle",
+      openerTitle: "Vous avez tapé tous les deux.",
+      openerNote: "Le temps d'un verre",
     },
   },
   es: {
@@ -714,6 +723,9 @@ export const t: Record<Locale, Dict> = {
       send: "Enviar",
       sendError: "No se pudo enviar tu mensaje. Inténtalo de nuevo.",
       closed: "Este match ha expirado por la noche.",
+      presence: "En la sala",
+      openerTitle: "Se han gustado los dos.",
+      openerNote: "El tiempo de una copa",
     },
   },
 };

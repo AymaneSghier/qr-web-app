@@ -53,6 +53,11 @@ type TypingPayload = {
 
 const TYPING_IDLE_MS = 1_600;
 
+// Film grain over the velvet ground so the surface reads as a bar at night, not
+// a flat digital fill (docs/design.md — "the night is the set", never flat).
+const GRAIN_URL =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
+
 function readMarkerKey(matchId: string) {
   return `paramour-chat-read:${matchId}`;
 }
@@ -86,6 +91,7 @@ export default function MatchChatPage() {
   const [status, setStatus] = useState<Status>("loading");
   const [errorMsg, setErrorMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState<ReportReason>("harassment");
   const [reportNote, setReportNote] = useState("");
@@ -95,6 +101,7 @@ export default function MatchChatPage() {
   const [blockNote, setBlockNote] = useState("");
   const [otherTyping, setOtherTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(
     null
   );
@@ -272,6 +279,44 @@ export default function MatchChatPage() {
     };
   }, []);
 
+  // Size the shell to the actually-visible viewport. iOS Safari's floating
+  // bottom bar overlays CSS-viewport content without shrinking vh/svh/dvh, so
+  // height units tuck the composer under it; window.visualViewport.height is the
+  // real visible height (excludes the bar and the keyboard). Body scroll is
+  // locked while mounted so only the thread scrolls (never the whole page).
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const root = document.documentElement;
+    const setVh = () =>
+      root.style.setProperty("--app-vh", `${vv ? vv.height : window.innerHeight}px`);
+    setVh();
+    vv?.addEventListener("resize", setVh);
+    vv?.addEventListener("scroll", setVh);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      vv?.removeEventListener("resize", setVh);
+      vv?.removeEventListener("scroll", setVh);
+      document.body.style.overflow = prevOverflow;
+      root.style.removeProperty("--app-vh");
+    };
+  }, []);
+
+  // Close the ⋯ menu on any tap outside it. A backdrop div can't be trusted
+  // here: the header's backdrop-blur makes `position: fixed` resolve against the
+  // header box, not the viewport, so a fixed overlay would miss taps in the
+  // thread. A pointerdown listener is stacking-context-proof (covers touch).
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onPointerDown(event: PointerEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [menuOpen]);
+
   function broadcastTyping(typing: boolean) {
     if (!me || !typingChannelRef.current) return;
     typingChannelRef.current.send({
@@ -356,6 +401,7 @@ export default function MatchChatPage() {
   }
 
   function openBlock() {
+    setMenuOpen(false);
     setBlockOpen(true);
     setBlockReason("unsafe_behavior");
     setBlockNote("");
@@ -374,6 +420,7 @@ export default function MatchChatPage() {
   }
 
   function openReport() {
+    setMenuOpen(false);
     setReportOpen(true);
     setReportReason("harassment");
     setReportNote("");
@@ -429,68 +476,157 @@ export default function MatchChatPage() {
   }
 
   return (
-    <main className="night-shell flex min-h-screen flex-col text-cream">
-      <header className="night-content sticky top-0 z-10 border-b border-champagne/15 bg-velvet px-4 py-4">
-        <div className="mx-auto flex max-w-3xl items-center gap-4">
+    // Height is the JS-measured visible viewport (see effect), falling back to
+    // 100dvh before hydration. Normal flow, not fixed: the thread scrolls, the
+    // composer is the last flex child so it always sits at the visible bottom.
+    <main
+      className="night-shell flex flex-col overflow-hidden text-cream"
+      style={{ height: "var(--app-vh, 100dvh)" }}
+    >
+      {/* Ambient depth so the ground reads as a bar at night, never a flat
+          fill: a warm ember rising from the composer, a wine glow up top, a
+          vignette deepening the edges, and a whisper of grain. No pattern, no
+          second hue — discretion stays (docs/design.md). */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            "radial-gradient(95% 55% at 50% 112%, rgba(216,180,170,0.10), rgba(var(--wine-rgb),0.22) 38%, transparent 74%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            "radial-gradient(80% 45% at 50% -8%, rgba(var(--wine-rgb),0.20), transparent 60%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{
+          background:
+            "radial-gradient(120% 88% at 50% 42%, transparent 52%, rgba(var(--velvet-rgb),0.55))",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0"
+        style={{ opacity: 0.06, backgroundImage: GRAIN_URL }}
+      />
+
+      <header
+        className="night-content z-20 shrink-0 border-b border-champagne/15 bg-velvet/85 px-4 pb-3 backdrop-blur"
+        style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
+      >
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
           <Link
             href={`/v/${match.venue.slug}`}
-            className="night-button night-button-secondary rounded-full px-3 py-2 text-sm"
+            aria-label={s.backToRoom}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-cream/10 bg-cream/[0.04] text-cream transition-colors hover:border-cream/20"
           >
-            {s.backToRoom}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+              <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </Link>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={other.photo_url}
             alt={other.first_name}
-            className="night-photo-ring h-12 w-12 rounded-full object-cover"
+            className="night-photo-ring h-11 w-11 shrink-0 rounded-full object-cover"
           />
           <div className="min-w-0">
-            <h1 className="wordmark truncate text-xl font-semibold">{other.first_name}</h1>
-            <p className="truncate text-sm text-taupe">{s.expiresTonight}</p>
+            <h1 className="wordmark truncate text-[22px] leading-none">{other.first_name}</h1>
+            {/* One presence signal, calm: the red live-dot already says "now". */}
+            <p className="mt-[6px] flex items-center gap-[7px] font-label text-[10px] uppercase tracking-[0.2em] text-taupe">
+              <span className="h-[6px] w-[6px] rounded-full bg-red shadow-[0_0_8px_rgba(204,20,54,.9)]" />
+              {s.presence}
+            </p>
           </div>
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            <LanguageSelector />
+
+          {/* Single overflow menu: safety (blush, never red) then language.
+              Keeps the header calm; closes on any outside tap (see effect). */}
+          <div ref={menuRef} className="relative ml-auto shrink-0">
             <button
-              onClick={openReport}
-              className="night-button night-button-secondary rounded-full px-3 py-2 text-sm"
+              type="button"
+              aria-label={roomS.roomActions}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-champagne/25 bg-velvet/60 text-lg leading-none text-cream backdrop-blur"
             >
-              {roomS.report}
+              ⋯
             </button>
-            <button
-              onClick={openBlock}
-              className="night-button night-button-danger rounded-full px-3 py-2 text-sm"
-            >
-              {roomS.block}
-            </button>
+            {menuOpen && (
+              <div className="night-panel absolute right-0 z-50 mt-2 grid w-56 gap-2 p-2">
+                <p className="px-2 pt-1 font-label text-[10px] uppercase tracking-[0.2em] text-taupe">
+                  {other.first_name}
+                </p>
+                <button
+                  type="button"
+                  onClick={openReport}
+                  className="night-button night-button-danger px-4 py-3 text-xs"
+                >
+                  {roomS.report}
+                </button>
+                <button
+                  type="button"
+                  onClick={openBlock}
+                  className="night-button night-button-danger px-4 py-3 text-xs"
+                >
+                  {roomS.block}
+                </button>
+                <hr className="hairline my-1" />
+                <LanguageSelector className="justify-center" />
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      <section className="night-content mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3 px-4 py-6 sm:px-5">
+      <section className="night-content mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto px-4 pb-6 pt-5 sm:px-5">
+        {/* The opener, once at the top: the reveal echo + the ephemeral, said
+            softly and only here (no banner, no popup). */}
+        <div className="animate-curtain mx-auto mb-2 max-w-[88%] text-center">
+          <p className="wordmark text-[18px] text-cream">{s.openerTitle}</p>
+          <p className="mt-[7px] font-label text-[9px] uppercase tracking-[0.24em] text-taupe">
+            {s.openerNote}
+          </p>
+        </div>
+
         {messages.length === 0 ? (
-          <div className="night-panel mt-16 rounded-[2rem] p-8 text-center">
-            <p className="night-muted">{s.empty}</p>
-          </div>
+          <p className="mx-auto mt-6 max-w-[80%] text-center text-sm font-light leading-relaxed text-taupe">
+            {s.empty}
+          </p>
         ) : (
           messages.map((message) => {
             const mine = message.sender_id === me.id;
             return (
               <div
                 key={message.id}
-                className={`flex flex-col ${mine ? "items-end" : "items-start"}`}
+                className={`animate-curtain flex max-w-[80%] flex-col ${
+                  mine ? "items-end self-end" : "items-start self-start"
+                }`}
               >
                 <p
-                  className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  className={`px-[15px] py-[11px] text-[14.5px] font-light leading-[1.5] text-cream ${
                     mine
-                      ? "bg-wine text-cream"
-                      : "border border-champagne/15 bg-bordeaux text-cream"
+                      ? "rounded-[20px] rounded-br-[7px]"
+                      : "rounded-[20px] rounded-bl-[7px] border border-cream/[0.06]"
                   }`}
+                  style={
+                    mine
+                      ? { background: "var(--bordeaux-warm)" }
+                      : { background: "var(--bordeaux-deep)" }
+                  }
                 >
                   {message.body}
                 </p>
                 <time
                   dateTime={message.created_at}
-                  className="mt-1 px-2 text-[0.7rem] font-medium text-taupe"
+                  className="mt-[5px] px-1 font-label text-[9.5px] uppercase tracking-[0.12em] text-taupe"
                 >
                   {timeFormatter.format(new Date(message.created_at))}
                 </time>
@@ -498,14 +634,18 @@ export default function MatchChatPage() {
             );
           })
         )}
+
         {otherTyping && other && (
-          <div className="flex items-center gap-2 px-2 text-sm font-medium text-taupe">
-            <span className="flex gap-1">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-taupe" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-taupe [animation-delay:120ms]" />
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-taupe [animation-delay:240ms]" />
+          <div className="flex items-center gap-2 self-start">
+            <span
+              className="flex gap-1 rounded-[20px] rounded-bl-[7px] border border-cream/[0.06] px-[14px] py-[11px]"
+              style={{ background: "var(--bordeaux-deep)" }}
+            >
+              <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-taupe/70" />
+              <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-taupe/70 [animation-delay:120ms]" />
+              <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-taupe/70 [animation-delay:240ms]" />
             </span>
-            {s.typing(other.first_name)}
+            <span className="font-light text-taupe">{s.typing(other.first_name)}</span>
           </div>
         )}
         <div ref={bottomRef} />
@@ -513,27 +653,32 @@ export default function MatchChatPage() {
 
       <form
         onSubmit={sendMessage}
-        className="night-content sticky bottom-0 border-t border-champagne/15 bg-velvet px-4 py-4 sm:px-5"
+        className="night-content z-20 shrink-0 border-t border-cream/[0.06] bg-velvet/80 px-4 pt-4 backdrop-blur sm:px-5"
+        // iOS 26 Safari's floating bottom bar overlays content and is taller than
+        // the home-indicator inset alone, so clear it with inset + a fixed lift.
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 2.5rem)" }}
       >
-        <div className="mx-auto flex max-w-3xl gap-3">
+        <div className="mx-auto flex max-w-3xl items-center gap-[10px]">
           <input
             value={draft}
             onChange={(event) => handleDraftChange(event.target.value)}
             maxLength={2000}
             placeholder={s.placeholder}
-            className="night-input min-w-0 flex-1 px-4 py-3"
+            className="min-w-0 flex-1 rounded-full border border-cream/10 bg-bordeaux px-4 py-3 text-[14px] font-light text-cream outline-none transition-colors placeholder:text-taupe/70 focus:border-blush/60"
           />
           <button
+            type="submit"
             disabled={sending || draft.trim().length === 0}
-            className="night-button night-button-primary px-5 py-3 disabled:cursor-not-allowed disabled:border-bordeaux disabled:bg-bordeaux disabled:text-taupe"
+            aria-label={s.send}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-cream/[0.14] bg-cream/10 text-cream transition-[transform,opacity] active:scale-[0.97] disabled:opacity-40 motion-reduce:active:scale-100"
           >
-            {s.send}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-[18px] w-[18px]">
+              <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         </div>
         {errorMsg && (
-          <p className="mx-auto mt-3 max-w-3xl text-sm text-blush">
-            {errorMsg}
-          </p>
+          <p className="mx-auto mt-3 max-w-3xl text-sm text-blush">{errorMsg}</p>
         )}
       </form>
 
@@ -543,7 +688,7 @@ export default function MatchChatPage() {
             onSubmit={submitReport}
             className="night-panel w-full max-w-sm rounded-[2rem] p-6"
           >
-            <h2 className="font-display text-2xl font-medium">
+            <h2 className="wordmark text-2xl">
               {roomS.reportTitle(other.first_name)}
             </h2>
             {reportSubmitted ? (
@@ -625,7 +770,7 @@ export default function MatchChatPage() {
             onSubmit={submitBlock}
             className="night-panel w-full max-w-sm rounded-[2rem] p-6"
           >
-            <h2 className="font-display text-2xl font-medium">
+            <h2 className="wordmark text-2xl">
               {roomS.blockTitle(other.first_name)}
             </h2>
             <label className="mt-5 block text-sm font-medium text-taupe">
