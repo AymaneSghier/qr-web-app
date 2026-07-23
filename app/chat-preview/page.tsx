@@ -1,13 +1,18 @@
 "use client";
 
-// TEMPORARY preview route (#73). Three comparable directions for the reworked
-// match-chat surface, rendered on the real tokens/fonts so the founder can pick
-// or mix on a phone via the Vercel preview. Delete this route before the real
-// PR — nothing here is wired to data.
+// TEMPORARY preview route (#73). Comparing calmer takes on the chosen "B"
+// direction (in-person-first) for the reworked match-chat surface, rendered on
+// the real tokens/fonts so the founder can pick on a phone via the Vercel
+// preview. Delete this route before the real PR — nothing here is wired to data.
+//
+// Direction locked to B (presence, not a chat you live in). The open question
+// is the DOSE: how much of the ephemeral/presence signal to keep. One presence
+// signal (header live-dot) + one opener line, each said once. No banner, no
+// popup — "soft urgency" means whispered once, not nagged.
 
 import { useState } from "react";
 
-type Variant = "A" | "B" | "C";
+type Variant = "B1" | "B2" | "A";
 
 type Msg = { id: number; mine: boolean; body: string; time?: string };
 
@@ -26,9 +31,9 @@ const THREAD: Msg[] = [
 ];
 
 const VARIANT_LABEL: Record<Variant, string> = {
-  A: "A · Le chat s'efface",
-  B: "B · In-person first",
-  C: "C · Couture",
+  B1: "B · calme",
+  B2: "B · épuré",
+  A: "A · minimal",
 };
 
 function BackChevron() {
@@ -61,21 +66,13 @@ function TheirBubble({ body }: { body: string }) {
   );
 }
 
-/* My bubble carries the variant's signature: sober lift (A/B) vs warm wine (C). */
-function MyBubble({ body, time, variant }: { body: string; time?: string; variant: Variant }) {
-  const warm = variant === "C";
+/* My bubble — sober lift, no warm colour (red stays an event). */
+function MyBubble({ body, time }: { body: string; time?: string }) {
   return (
     <div className="flex max-w-[80%] flex-col items-end self-end">
       <p
         className="rounded-[20px] rounded-br-[7px] px-[15px] py-[11px] text-[14.5px] font-light leading-[1.5] text-cream"
-        style={
-          warm
-            ? {
-                background: "linear-gradient(160deg, var(--wine), var(--red-deep))",
-                border: "1px solid rgba(var(--champagne-rgb), 0.16)",
-              }
-            : { background: "var(--bordeaux-warm)" }
-        }
+        style={{ background: "var(--bordeaux-warm)" }}
       >
         {body}
       </p>
@@ -107,7 +104,7 @@ function TypingBubble() {
   );
 }
 
-function Avatar({ size, ring }: { size: number; ring?: boolean }) {
+function Avatar({ size }: { size: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -115,32 +112,32 @@ function Avatar({ size, ring }: { size: number; ring?: boolean }) {
       alt={OTHER.name}
       width={size}
       height={size}
-      className={`shrink-0 rounded-full object-cover ${ring ? "night-photo-ring" : ""}`}
+      className="night-photo-ring shrink-0 rounded-full object-cover"
       style={{ width: size, height: size }}
     />
   );
 }
 
-function LiveKicker() {
+/* One presence signal, calm: the live-dot already says "now" — no "maintenant". */
+function PresenceKicker() {
   return (
     <span className="mt-[6px] flex items-center gap-[7px] font-label text-[10px] uppercase tracking-[0.2em] text-taupe">
       <span
         className="h-[6px] w-[6px] rounded-full bg-red"
         style={{ boxShadow: "0 0 8px rgba(var(--red-rgb),0.9)" }}
       />
-      Dans la salle · maintenant
+      Dans la salle
     </span>
   );
 }
 
-/* Sober top bar used by A and B. */
-function SoberHeader({ variant }: { variant: Variant }) {
+function Header({ variant }: { variant: Variant }) {
   return (
     <header className="flex items-center gap-3 px-[18px] py-4">
       <button className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-cream/[0.08] bg-cream/[0.04] text-cream">
         <BackChevron />
       </button>
-      <Avatar size={40} ring />
+      <Avatar size={40} />
       <div>
         <div className="font-display text-[22px] italic leading-none">{OTHER.name}</div>
         {variant === "A" ? (
@@ -148,7 +145,7 @@ function SoberHeader({ variant }: { variant: Variant }) {
             Ce soir
           </div>
         ) : (
-          <LiveKicker />
+          <PresenceKicker />
         )}
       </div>
       <button className="ml-auto flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-cream/[0.08] bg-cream/[0.04] text-lg text-taupe">
@@ -158,77 +155,22 @@ function SoberHeader({ variant }: { variant: Variant }) {
   );
 }
 
-/* Photo-bleed header for C. */
-function PhotoHeader() {
-  return (
-    <div className="relative h-[150px] shrink-0 overflow-hidden">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={OTHER.photo}
-        alt={OTHER.name}
-        className="h-full w-full object-cover"
-        style={{ objectPosition: "50% 30%" }}
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(var(--velvet-rgb),0.15) 0%, rgba(var(--velvet-rgb),0.35) 40%, var(--velvet) 100%)",
-        }}
-      />
-      <button className="absolute left-[14px] top-[14px] z-10 flex h-[34px] w-[34px] items-center justify-center rounded-full border border-cream/[0.1] bg-velvet/40 text-cream">
-        <BackChevron />
-      </button>
-      <button className="absolute right-[14px] top-[14px] z-10 flex h-[34px] w-[34px] items-center justify-center rounded-full border border-cream/[0.1] bg-velvet/40 text-lg text-taupe">
-        ···
-      </button>
-      <div className="absolute inset-x-[18px] bottom-3 z-10">
-        <div className="font-display text-[28px] italic leading-none">{OTHER.name}</div>
-        <LiveKicker />
-      </div>
-    </div>
-  );
-}
-
-/* B's presence signal: the north-star made visible. */
-function PresenceBlock() {
-  return (
-    <div
-      className="mx-[18px] mb-1 flex items-center gap-[11px] rounded-2xl px-[14px] py-3"
-      style={{
-        background: "linear-gradient(180deg, rgba(var(--wine-rgb),0.18), rgba(29,15,21,0.5))",
-        border: "1px solid rgba(var(--champagne-rgb),0.14)",
-      }}
-    >
-      <span
-        className="h-[5px] w-[5px] shrink-0 rounded-full bg-champagne"
-        style={{ boxShadow: "0 0 8px rgba(var(--champagne-rgb),0.7)" }}
-      />
-      <div>
-        <div className="font-label text-[9.5px] uppercase tracking-[0.22em] text-blush">
-          {OTHER.venue} · jusqu&apos;à l&apos;aube
-        </div>
-        <div className="mt-[3px] text-[13px] font-light text-cream">
-          Vous y êtes tous les deux. Le chat ferme au petit matin.
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PinnedOpener() {
+/* The opener, once at the top of the thread. B1 folds the venue + ephemeral
+   into a soft caption ("ce soir seulement"); B2 keeps only the reveal echo. */
+function Opener({ ephemeral }: { ephemeral: boolean }) {
   return (
     <div className="mx-auto mb-2 mt-1 max-w-[88%] text-center">
       <div className="font-display text-[17px] italic text-cream">Vous avez tapé tous les deux.</div>
-      <div className="mt-[7px] font-label text-[9px] uppercase tracking-[0.22em] text-taupe">
-        Elle est là, maintenant
-      </div>
+      {ephemeral && (
+        <div className="mt-[7px] font-label text-[9px] uppercase tracking-[0.22em] text-taupe">
+          {OTHER.venue} · ce soir seulement
+        </div>
+      )}
     </div>
   );
 }
 
-function Composer({ variant }: { variant: Variant }) {
-  const warmSend = variant === "C";
+function Composer() {
   return (
     <div
       className="flex items-center gap-[10px] px-[18px] pb-[22px] pt-[14px]"
@@ -239,12 +181,8 @@ function Composer({ variant }: { variant: Variant }) {
         className="min-w-0 flex-1 rounded-full border border-cream/[0.08] bg-bordeaux px-4 py-3 text-[14px] font-light text-cream outline-none placeholder:text-taupe/70"
       />
       <button
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-        style={
-          warmSend
-            ? { background: "var(--cream)", color: "var(--red-deep)" }
-            : { background: "rgba(var(--cream-rgb),0.1)", color: "var(--cream)", border: "1px solid rgba(var(--cream-rgb),0.14)" }
-        }
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-cream"
+        style={{ background: "rgba(var(--cream-rgb),0.1)", border: "1px solid rgba(var(--cream-rgb),0.14)" }}
       >
         <SendArrow />
       </button>
@@ -256,21 +194,20 @@ function ChatSurface({ variant }: { variant: Variant }) {
   return (
     <div className="night-shell flex h-full flex-col text-cream">
       <div className="night-content flex h-full flex-col">
-        {variant === "C" ? <PhotoHeader /> : <SoberHeader variant={variant} />}
-        {variant !== "C" && <div className="hairline mx-[18px]" />}
-        {variant === "B" && <PresenceBlock />}
+        <Header variant={variant} />
+        <div className="hairline mx-[18px]" />
 
         <div className="flex flex-1 flex-col gap-[14px] overflow-y-auto px-[18px] pb-[14px] pt-2">
-          {variant === "B" ? (
-            <PinnedOpener />
-          ) : (
+          {variant === "A" ? (
             <div className="my-1 self-center font-label text-[9px] uppercase tracking-[0.24em] text-taupe">
               22:14
             </div>
+          ) : (
+            <Opener ephemeral={variant === "B1"} />
           )}
           {THREAD.map((m) =>
             m.mine ? (
-              <MyBubble key={m.id} body={m.body} time={m.time} variant={variant} />
+              <MyBubble key={m.id} body={m.body} time={m.time} />
             ) : (
               <TheirBubble key={m.id} body={m.body} />
             )
@@ -278,20 +215,20 @@ function ChatSurface({ variant }: { variant: Variant }) {
           <TypingBubble />
         </div>
 
-        <Composer variant={variant} />
+        <Composer />
       </div>
     </div>
   );
 }
 
 export default function ChatPreviewPage() {
-  const [variant, setVariant] = useState<Variant>("B");
+  const [variant, setVariant] = useState<Variant>("B1");
 
   return (
     <div className="flex h-[100dvh] flex-col bg-velvet">
       {/* Chooser strip — NOT part of the surface, just to switch on the phone. */}
       <div className="flex shrink-0 items-center justify-center gap-1 border-b border-cream/10 bg-[#0a0608] px-3 py-2">
-        {(["A", "B", "C"] as Variant[]).map((v) => (
+        {(["B1", "B2", "A"] as Variant[]).map((v) => (
           <button
             key={v}
             onClick={() => setVariant(v)}
