@@ -272,6 +272,29 @@ not busywork — and it is `/standup`'s job to put those PRs in front of you.
   and sanity-check priorities. This is also when raw ideas either become `Ready` work
   or get dropped.
 
+### Shared QA rooms
+
+The shared development database has two permanent test venues: `/v/test-crowded`
+contains synthetic profiles for scroll/match testing, while `/v/test-empty` exercises
+the waiting state. They stay live across the 06:00 rollover and never appear in
+founder analytics.
+
+Each founder configures the server-only `SUPABASE_SERVICE_ROLE_KEY` and their own
+`QA_TESTER_PROFILE_ID` in the main checkout's `.env.local`; `/pick` copies that file
+into future worktrees. The profile UUID is local to that founder's browser identity,
+not a shared team value. It persists across venue scans on that browser, but changes
+if its anonymous session is cleared or another browser/device is used.
+
+Run `npm run seed:test-venues` to reset both test rooms, create the 36 synthetic
+profiles, and prepare Maya's pre-like for the locally configured tester. Pass
+`--tester-profile-id <UUID>` to override the local default, or use `clear` to remove
+the synthetic state while leaving both venues available.
+
+The Supabase development database is shared: every seed/reset replaces the test-room
+state for both founders. Coordinate before running it when the other founder may be
+testing. The command is test-only, refuses to clear a venue not explicitly marked as
+test, and must never be pointed at a real venue.
+
 ---
 
 ## Worked examples
