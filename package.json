@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "preview:qr": "node scripts/preview-qr.mjs"
+    "preview:qr": "node scripts/preview-qr.mjs",
+    "seed:test-venues": "node scripts/seed-test-venues.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

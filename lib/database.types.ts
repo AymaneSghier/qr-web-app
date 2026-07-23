@@ -151,6 +151,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          // Filled by the likes_set_expires_at BEFORE INSERT trigger.
           expires_at?: string
           id?: string
           liked_id: string
@@ -200,7 +201,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          expires_at?: string
+          expires_at: string
           id?: string
           profile_a: string
           profile_b: string
@@ -654,8 +655,10 @@ export type Database = {
           created_at: string
           id: string
           is_live: boolean
+          is_test_venue: boolean
           name: string
           profile_preview_enabled: boolean
+          rollover_disabled: boolean
           slug: string
           timezone: string
         }
@@ -664,8 +667,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_live?: boolean
+          is_test_venue?: boolean
           name: string
           profile_preview_enabled?: boolean
+          rollover_disabled?: boolean
           slug: string
           timezone?: string
         }
@@ -674,8 +679,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_live?: boolean
+          is_test_venue?: boolean
           name?: string
           profile_preview_enabled?: boolean
+          rollover_disabled?: boolean
           slug?: string
           timezone?: string
         }
@@ -811,8 +818,10 @@ export type Database = {
           created_at: string
           id: string
           is_live: boolean
+          is_test_venue: boolean
           name: string
           profile_preview_enabled: boolean
+          rollover_disabled: boolean
           slug: string
           timezone: string
         }
@@ -830,8 +839,10 @@ export type Database = {
           created_at: string
           id: string
           is_live: boolean
+          is_test_venue: boolean
           name: string
           profile_preview_enabled: boolean
+          rollover_disabled: boolean
           slug: string
           timezone: string
         }

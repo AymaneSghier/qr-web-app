@@ -3,8 +3,9 @@
 -- the room at 06:00 local (see the bloc1_night_rollover migration). Replace with
 -- the real Phase 1 venues later.
 
--- Dev venues ship live (is_live=true) so the local room flow works without
--- pressing Start in the admin dashboard first. Real venues are created dark.
+-- Lightweight stand-ins remain available for ordinary rollover testing. The
+-- permanent crowded/empty QA rooms and their profiles are managed by
+-- `npm run seed:test-venues` after the always-live migration is applied.
 insert into public.venues (slug, name, city, timezone, is_live) values
   ('paris-test', 'Paramour Test (Paris)', 'Paris',    'Europe/Paris',     true),
   ('nyc-test',   'Paramour Test (NYC)',   'New York', 'America/New_York', true)
