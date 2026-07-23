@@ -67,7 +67,7 @@ function CardBody({
           }`}
         >
           <span aria-hidden className="text-base leading-none">
-            ♥
+            {liked ? "♥" : "♡"}
           </span>
           {liked ? "Tapped" : "Tap"}
         </button>

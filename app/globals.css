@@ -386,10 +386,12 @@
     box-shadow: 0 0 0 1px rgba(var(--champagne-rgb), 0.28);
   }
 
-  /* The like heart — v2 "red present" (docs/design.md, room-card hero rebuild
-     #69). Filled red at rest, blooms once on tap. This supersedes the 07-03
-     "idle taupe outline -> solid" rule: the resting state (.heart-idle) is now
-     the same red fill as .heart-liked; liking only adds the one-shot bloom. */
+  /* The like heart — "red is an event" (docs/design.md). Discreet at rest, red
+     only once tapped: a standing red ♥ read as pre-selected/on and diluted the
+     rareness of the accent, so the resting state is a ghost pill (semi-velvet,
+     cream label, ♡) and liking flips it to the red fill + one-shot bloom (♥).
+     This is Marwane's call on the real screen, resolving the 07-03/rebuild
+     "red present" tension in favour of red staying an event. */
   .heart-button {
     display: inline-flex;
     align-items: center;
@@ -411,16 +413,18 @@
     transform: scale(0.97);
   }
 
+  /* Resting: a discreet ghost pill on the photo, not red. Semi-velvet with a
+     blur so it stays legible over any image, cream label, faint champagne edge
+     (same treatment as .night-button-secondary). */
   .heart-idle {
-    background: var(--red);
+    background: rgba(var(--velvet-rgb), 0.55);
     color: var(--cream);
-    border: 1px solid var(--red);
-    box-shadow: 0 12px 34px rgba(var(--red-rgb), 0.34);
+    border: 1px solid rgba(var(--champagne-rgb), 0.22);
+    backdrop-filter: blur(2px);
   }
 
   .heart-idle:hover {
-    background: var(--red-deep);
-    border-color: var(--red-deep);
+    border-color: rgba(var(--champagne-rgb), 0.42);
   }
 
   /* Focus ring is blush (a soft state), never red — matches inputs/buttons. */

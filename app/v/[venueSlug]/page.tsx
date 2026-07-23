@@ -1634,7 +1634,7 @@ function RoomFeedCard({
           }`}
         >
           <span aria-hidden className="text-base leading-none">
-            ♥
+            {liked ? "♥" : "♡"}
           </span>
           {liked ? s.liked : s.like}
         </button>
