@@ -1,6 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Figtree, Jost } from "next/font/google";
 import "./globals.css";
+
+// viewport-fit=cover exposes env(safe-area-inset-*) so full-bleed surfaces (the
+// chat, the room) can pad around the notch and the iOS home indicator instead
+// of the browser reserving that space and leaving letterbox bars.
+export const viewport: Viewport = {
+  viewportFit: "cover",
+};
 
 // Amourette type system (docs/design.md — the system v2): Fraunces for
 // display/wordmark/reveal (italic is the brand voice), Figtree for body,

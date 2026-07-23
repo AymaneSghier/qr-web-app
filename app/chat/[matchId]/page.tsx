@@ -453,12 +453,12 @@ export default function MatchChatPage() {
   }
 
   return (
-    // Exactly one small-viewport tall (svh, not vh/dvh). The body never scrolls
-    // (only the thread does), so iOS Safari keeps its bottom bar shown; svh is
-    // the height with that bar visible, so the composer always sits above it —
-    // dvh could momentarily take the taller viewport and tuck the composer under
-    // the bar. The home-indicator inset is reserved by the browser (contain).
-    <main className="night-shell flex h-[100svh] flex-col overflow-hidden text-cream">
+    // Fixed to the visual viewport, not sized in vh/svh/dvh: iOS Safari's
+    // floating bottom bar overlays CSS-viewport content without shrinking it, so
+    // height units still tuck the composer under it. A `position: fixed` box is
+    // laid out in the visual viewport, which sits above that bar. The thread is
+    // the only scroller; safe-area padding clears the notch and home indicator.
+    <main className="night-shell fixed inset-0 flex flex-col overflow-hidden text-cream">
       {/* Ambient depth so the ground reads as a bar at night, never a flat
           fill: a warm ember rising from the composer, a wine glow up top, a
           vignette deepening the edges, and a whisper of grain. No pattern, no
@@ -493,7 +493,10 @@ export default function MatchChatPage() {
         style={{ opacity: 0.06, backgroundImage: GRAIN_URL }}
       />
 
-      <header className="night-content z-20 shrink-0 border-b border-champagne/15 bg-velvet/85 px-4 py-3 backdrop-blur">
+      <header
+        className="night-content z-20 shrink-0 border-b border-champagne/15 bg-velvet/85 px-4 pb-3 backdrop-blur"
+        style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
+      >
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <Link
             href={`/v/${match.venue.slug}`}
@@ -626,7 +629,8 @@ export default function MatchChatPage() {
 
       <form
         onSubmit={sendMessage}
-        className="night-content z-20 shrink-0 border-t border-cream/[0.06] bg-velvet/80 px-4 py-4 backdrop-blur sm:px-5"
+        className="night-content z-20 shrink-0 border-t border-cream/[0.06] bg-velvet/80 px-4 pt-4 backdrop-blur sm:px-5"
+        style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
       >
         <div className="mx-auto flex max-w-3xl items-center gap-[10px]">
           <input
