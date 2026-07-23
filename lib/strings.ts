@@ -86,6 +86,26 @@ type Dict = {
     photoReviewFailed: string;
     photoUploadFailed: string;
     genericError: string;
+    // Guided onboarding wizard (#72). The flow asks one question per screen and
+    // ends on an editable preview of the room card; edit mode reuses the same
+    // field widgets on a single screen.
+    onb: {
+      stepOf: (n: number, total: number) => string;
+      namePrompt: string;
+      nameHelp: string;
+      photoPrompt: string;
+      photoHelp: string;
+      genderPrompt: string;
+      interestPrompt: string;
+      interestHelp: string;
+      bioPrompt: string;
+      bioHelp: string;
+      previewKicker: string;
+      changePhoto: string;
+      continue: string;
+      reassure: string;
+      resumeNote: string;
+    };
   };
   genders: { woman: string; man: string; nonbinary: string };
   room: {
@@ -184,6 +204,11 @@ type Dict = {
   };
 };
 
+// Convenience aliases so components can type their string props without the
+// whole Dict (which stays internal).
+export type ProfileStrings = Dict["profile"];
+export type GenderLabels = Dict["genders"];
+
 export const t: Record<Locale, Dict> = {
   en: {
     landing: {
@@ -233,6 +258,23 @@ export const t: Record<Locale, Dict> = {
       photoReviewFailed: "Couldn't check your photo. Try again.",
       photoUploadFailed: "Photo upload failed.",
       genericError: "Something went wrong. Try again.",
+      onb: {
+        stepOf: (n, total) => `Step ${n} of ${total}`,
+        namePrompt: "What should we call you?",
+        nameHelp: "Your first name, the way people know you.",
+        photoPrompt: "Show yourself",
+        photoHelp: "A clear photo of your face. This is what the room sees.",
+        genderPrompt: "You are…",
+        interestPrompt: "You'd like to meet…",
+        interestHelp: "Pick one or more.",
+        bioPrompt: "A few words about you",
+        bioHelp: "Optional — what you drink, what makes you laugh.",
+        previewKicker: "This is how you'll appear",
+        changePhoto: "Change photo",
+        continue: "Continue",
+        reassure: "You stay in control of who sees you",
+        resumeNote: "We kept what you'd started.",
+      },
     },
     genders: { woman: "Woman", man: "Man", nonbinary: "Non-binary" },
     room: {
@@ -386,6 +428,23 @@ export const t: Record<Locale, Dict> = {
       photoReviewFailed: "Impossible de vérifier ta photo. Réessaie.",
       photoUploadFailed: "L'envoi de la photo a échoué.",
       genericError: "Un problème est survenu. Réessaie.",
+      onb: {
+        stepOf: (n, total) => `Étape ${n} sur ${total}`,
+        namePrompt: "On t'appelle comment ?",
+        nameHelp: "Ton prénom, celui qu'on te connaît.",
+        photoPrompt: "Montre-toi",
+        photoHelp: "Une photo claire de ton visage. C'est ce que la salle verra.",
+        genderPrompt: "Tu es…",
+        interestPrompt: "Tu veux rencontrer…",
+        interestHelp: "Choisis une ou plusieurs options.",
+        bioPrompt: "Deux mots sur toi",
+        bioHelp: "Optionnel — ce que tu bois, ce qui te fait rire.",
+        previewKicker: "Voici comment on te verra",
+        changePhoto: "Changer la photo",
+        continue: "Continuer",
+        reassure: "Tu gardes le contrôle de qui te voit",
+        resumeNote: "On a gardé ce que tu avais commencé.",
+      },
     },
     genders: { woman: "Femme", man: "Homme", nonbinary: "Non-binaire" },
     room: {
@@ -537,6 +596,23 @@ export const t: Record<Locale, Dict> = {
       photoReviewFailed: "No se pudo revisar tu foto. Inténtalo de nuevo.",
       photoUploadFailed: "La subida de la foto falló.",
       genericError: "Algo salió mal. Inténtalo de nuevo.",
+      onb: {
+        stepOf: (n, total) => `Paso ${n} de ${total}`,
+        namePrompt: "¿Cómo te llamamos?",
+        nameHelp: "Tu nombre, el que la gente conoce.",
+        photoPrompt: "Muéstrate",
+        photoHelp: "Una foto clara de tu cara. Es lo que verá la sala.",
+        genderPrompt: "Eres…",
+        interestPrompt: "Quieres conocer…",
+        interestHelp: "Elige una o varias opciones.",
+        bioPrompt: "Unas palabras sobre ti",
+        bioHelp: "Opcional — qué bebes, qué te hace reír.",
+        previewKicker: "Así es como te verán",
+        changePhoto: "Cambiar foto",
+        continue: "Continuar",
+        reassure: "Tú controlas quién te ve",
+        resumeNote: "Guardamos lo que habías empezado.",
+      },
     },
     genders: { woman: "Mujer", man: "Hombre", nonbinary: "No binario" },
     room: {
