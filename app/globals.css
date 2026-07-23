@@ -195,6 +195,72 @@
       );
   }
 
+  /* Room feed card (hero #1, docs/design.md "Sous les projecteurs"). The photo
+     IS the screen; the person emerges from a warm key light on near-black. The
+     layered treatment below is what makes any photo (a bright selfie included)
+     legible and pulls every face into the same night. Order matters: grade
+     (crush highlights) -> key (lift the face) -> vignette -> grain -> scrims. */
+
+  /* Night grade: a warm velvet multiply veil over EVERY photo. Neutralises pure
+     white and bright gold so cream text / champagne hairline / red dot stay
+     legible, and dims everyone into the same venue darkness ("the night is the
+     set"). The one guarantee that text never sits on a raw bright photo. */
+  .room-grade {
+    background: rgba(var(--velvet-rgb), 0.42);
+    mix-blend-mode: multiply;
+  }
+
+  /* Rose key light: a soft warm radial high on the frame, screened in so the
+     face lifts out of the shadow. This is the "emerges from the dark" move. */
+  .room-key {
+    background: radial-gradient(
+      46% 34% at 52% 26%,
+      rgba(224, 176, 158, 0.4),
+      rgba(var(--wine-rgb), 0.1) 44%,
+      transparent 66%
+    );
+    mix-blend-mode: screen;
+  }
+
+  /* Vignette to velvet (never pure black): frames the light, deepens the edges. */
+  .room-vignette {
+    background: radial-gradient(
+      120% 92% at 50% 32%,
+      transparent 26%,
+      rgba(var(--velvet-rgb), 0.5) 70%,
+      rgba(var(--velvet-rgb), 0.92)
+    );
+  }
+
+  /* Fine film grain: keeps the photo cinematic, never a flat digital image. */
+  .room-grain {
+    opacity: 0.1;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Top scrim: a strong velvet fade so the on-photo header (live status, ⋯)
+     stays legible even over a white/gold top third. */
+  .room-top-scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(var(--velvet-rgb), 0.85),
+      rgba(var(--velvet-rgb), 0.4) 45%,
+      transparent
+    );
+  }
+
+  /* Bottom scrim: fades to ~98% velvet under the identity block so the name,
+     bio, hairline and heart always sit on velvet, never on the raw photo. */
+  .room-identity-scrim {
+    background: linear-gradient(
+      180deg,
+      transparent 40%,
+      rgba(var(--velvet-rgb), 0.55) 64%,
+      rgba(var(--velvet-rgb), 0.98)
+    );
+  }
+
   .night-panel {
     border: 1px solid rgba(var(--champagne-rgb), 0.2);
     border-radius: 20px;
@@ -320,11 +386,10 @@
     box-shadow: 0 0 0 1px rgba(var(--champagne-rgb), 0.28);
   }
 
-  /* The like heart. NOTE: v2 (docs/design.md) makes the ♥ "red present" —
-     filled red at rest on the room card. These idle/liked classes still encode
-     the superseded 07-03 rule (idle taupe outline -> solid); they are updated
-     to v2 *values* here but the behaviour change lands with the room-card
-     hero rebuild, to keep Étape 0 non-visual-breaking on existing screens. */
+  /* The like heart — v2 "red present" (docs/design.md, room-card hero rebuild
+     #69). Filled red at rest, blooms once on tap. This supersedes the 07-03
+     "idle taupe outline -> solid" rule: the resting state (.heart-idle) is now
+     the same red fill as .heart-liked; liking only adds the one-shot bloom. */
   .heart-button {
     display: inline-flex;
     align-items: center;
@@ -337,13 +402,31 @@
     transition:
       background 400ms ease,
       color 400ms ease,
-      border-color 400ms ease;
+      border-color 400ms ease,
+      transform 200ms ease;
+  }
+
+  /* Press: a small settle, never a bounce (docs/design.md motion). */
+  .heart-button:active:not(:disabled) {
+    transform: scale(0.97);
   }
 
   .heart-idle {
-    background: var(--bordeaux);
-    color: var(--taupe);
-    border: 1px solid rgba(var(--taupe-rgb), 0.45);
+    background: var(--red);
+    color: var(--cream);
+    border: 1px solid var(--red);
+    box-shadow: 0 12px 34px rgba(var(--red-rgb), 0.34);
+  }
+
+  .heart-idle:hover {
+    background: var(--red-deep);
+    border-color: var(--red-deep);
+  }
+
+  /* Focus ring is blush (a soft state), never red — matches inputs/buttons. */
+  .heart-button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--blush-rgb), 0.55);
   }
 
   .heart-liked {
@@ -378,6 +461,35 @@
   }
   to {
     box-shadow: 0 0 26px 14px rgba(var(--red-rgb), 0);
+  }
+}
+
+/* The identity block rises softly into place — a fade, Expo.out, no bounce. */
+.room-card-enter {
+  animation: room-card-enter 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes room-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Honour the reduced-motion preference: keep the state change, drop the motion
+   (the heart bloom, the curtain rise, the press settle, card fade-ins). */
+@media (prefers-reduced-motion: reduce) {
+  .heart-liked,
+  .animate-curtain,
+  .room-card-enter {
+    animation: none;
+  }
+  .heart-button:active:not(:disabled) {
+    transform: none;
   }
 }
 
