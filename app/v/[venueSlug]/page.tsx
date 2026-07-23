@@ -314,7 +314,12 @@ export default function VenueRoom() {
         .eq("venue_id", venueId)
         .is("left_at", null)
         .neq("profile_id", myId)
-        .order("checked_in_at", { ascending: true });
+        // A stable, unique tiebreaker so the order is deterministic across
+        // reloads: checked_in_at alone is not unique (seed profiles share one
+        // timestamp; real check-ins can collide too), and any reshuffle of the
+        // ties makes the scroll-anchoring effect yank the feed under the thumb.
+        .order("checked_in_at", { ascending: true })
+        .order("profile_id", { ascending: true });
       const now = Date.now();
       const profiles = (data ?? []).map((row) => ({
         ...(row.profiles as unknown as PublicProfile),
