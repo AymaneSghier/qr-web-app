@@ -24,9 +24,9 @@ const OTHER = {
 };
 
 const THREAD: Msg[] = [
-  { id: 1, mine: false, body: "J'hésitais à taper. Contente de l'avoir fait." },
+  { id: 1, mine: false, body: "J'hésitais à taper. Contente de l'avoir fait.", time: "22:14" },
   { id: 2, mine: true, body: "Pareil. Tu es où dans la salle ?", time: "22:16" },
-  { id: 3, mine: false, body: "Près de la fenêtre. Veste rouge." },
+  { id: 3, mine: false, body: "Près de la fenêtre. Veste rouge.", time: "22:16" },
   { id: 4, mine: true, body: "Je te vois. J'arrive.", time: "22:17" },
 ];
 
@@ -53,15 +53,20 @@ function SendArrow() {
 }
 
 /* Received bubble is shared across variants. */
-function TheirBubble({ body }: { body: string }) {
+function TheirBubble({ body, time }: { body: string; time?: string }) {
   return (
-    <div className="max-w-[80%] self-start">
+    <div className="flex max-w-[80%] flex-col items-start self-start">
       <p
         className="rounded-[20px] rounded-bl-[7px] border border-cream/[0.06] px-[15px] py-[11px] text-[14.5px] font-light leading-[1.5] text-cream"
         style={{ background: "var(--bordeaux-deep)" }}
       >
         {body}
       </p>
+      {time && (
+        <time className="mt-[5px] px-1 font-label text-[9.5px] uppercase tracking-[0.12em] text-taupe">
+          {time}
+        </time>
+      )}
     </div>
   );
 }
@@ -163,7 +168,7 @@ function Opener({ ephemeral }: { ephemeral: boolean }) {
       <div className="font-display text-[17px] italic text-cream">Vous avez tapé tous les deux.</div>
       {ephemeral && (
         <div className="mt-[7px] font-label text-[9px] uppercase tracking-[0.22em] text-taupe">
-          {OTHER.venue} · ce soir seulement
+          Le temps d&apos;un verre
         </div>
       )}
     </div>
@@ -193,6 +198,24 @@ function Composer() {
 function ChatSurface({ variant }: { variant: Variant }) {
   return (
     <div className="night-shell flex h-full flex-col text-cream">
+      {/* Ambient depth so the ground reads as "a bar at night", never a flat
+          digital fill: a soft warm glow low (the light off the counter) and a
+          whisper of film grain over the whole surface. No pattern, no colour —
+          discretion stays. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(85% 42% at 50% 106%, rgba(var(--wine-rgb),0.16), transparent 70%)" }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          opacity: 0.05,
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
       <div className="night-content flex h-full flex-col">
         <Header variant={variant} />
         <div className="hairline mx-[18px]" />
@@ -209,7 +232,7 @@ function ChatSurface({ variant }: { variant: Variant }) {
             m.mine ? (
               <MyBubble key={m.id} body={m.body} time={m.time} />
             ) : (
-              <TheirBubble key={m.id} body={m.body} />
+              <TheirBubble key={m.id} body={m.body} time={m.time} />
             )
           )}
           <TypingBubble />
