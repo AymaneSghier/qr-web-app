@@ -135,6 +135,7 @@ type Dict = {
     becomeVisible: string;
     visibilityError: string;
     matchKicker: string;
+    matchTitle: string;
     matchBody: string;
     matchDismiss: string;
     leftTitle: string;
@@ -281,7 +282,9 @@ export const t: Record<Locale, Dict> = {
       becomeVisible: "Become visible",
       visibilityError: "Couldn't update your visibility. Try again.",
       matchKicker: "Mutual energy",
-      matchBody: "You both tapped. Keep it light, respectful, and in the moment.",
+      matchTitle: "You both tapped",
+      matchBody:
+        "Keep it light, respectful, and in the moment. You're both here, right now.",
       matchDismiss: "See who else is here",
       leftTitle: "You've left the room",
       leftBody: "You're no longer visible here. Come back whenever you like.",
@@ -431,8 +434,9 @@ export const t: Record<Locale, Dict> = {
       becomeVisible: "Redevenir visible",
       visibilityError: "Impossible de changer ta visibilité. Réessaie.",
       matchKicker: "Énergie mutuelle",
+      matchTitle: "Vous avez craqué",
       matchBody:
-        "Vous avez craqué l'un pour l'autre. Reste léger, respectueux, et dans le moment.",
+        "Reste léger, respectueux, et dans le moment. Vous êtes là tous les deux, maintenant.",
       matchDismiss: "Voir qui est là",
       leftTitle: "Tu as quitté la salle",
       leftBody: "Tu n'es plus visible ici. Reviens quand tu veux.",
@@ -579,8 +583,9 @@ export const t: Record<Locale, Dict> = {
       becomeVisible: "Volver a ser visible",
       visibilityError: "No se pudo cambiar tu visibilidad. Inténtalo de nuevo.",
       matchKicker: "Flechazo mutuo",
+      matchTitle: "Os habéis flechado",
       matchBody:
-        "Os habéis flechado. Manténlo ligero, respetuoso y en el momento.",
+        "Manténlo ligero, respetuoso y en el momento. Estáis aquí los dos, ahora mismo.",
       matchDismiss: "Ver quién más está aquí",
       leftTitle: "Has salido de la sala",
       leftBody: "Ya no eres visible aquí. Vuelve cuando quieras.",
