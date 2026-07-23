@@ -1605,34 +1605,83 @@ export default function VenueRoom() {
       </div>
 
       {newMatch && (
-        // One of the only two full-red screens (docs/design.md): the match reveal.
-        // A curtain rising, not a jackpot — no confetti, a slow fade.
-        <div className="animate-curtain fixed inset-0 z-50 flex flex-col items-center justify-center bg-red-deep px-6 text-center text-cream">
-          <p className="wordmark text-2xl text-cream">Amourette</p>
-          <p className="night-kicker mt-8 text-blush">{s.matchKicker}</p>
-          <ProfilePhoto
-            src={newMatch.other.photo_url}
-            name={newMatch.other.first_name}
-            className="mx-auto mt-6 h-32 w-32 rounded-full object-cover shadow-[0_0_0_1px_rgba(244,235,225,0.5)]"
-            initialClassName="text-4xl"
-          />
-          <h2 className="wordmark mt-6 text-5xl font-medium italic text-cream">
-            {newMatch.other.first_name}
-          </h2>
-          <p className="mt-4 max-w-xs text-blush">{s.matchBody}</p>
-          <div className="mt-10 grid w-full max-w-xs gap-3">
-            <Link
-              href={`/chat/${newMatch.id}`}
-              className="night-button w-full bg-cream px-5 py-4 text-center text-red-deep"
-            >
-              {s.openChat}
-            </Link>
-            <button
-              onClick={() => setNewMatch(null)}
-              className="night-button w-full border border-cream/40 px-5 py-4 text-cream"
-            >
-              {s.matchDismiss}
-            </button>
+        // Hero #2 — the match reveal. One of the only two full-red screens
+        // (docs/design.md): full red-deep radial ground, two overlapping
+        // portraits (the match in front behind a fine champagne ring, you
+        // receding behind), a low champagne spark where the faces meet. It
+        // rises like a curtain, never a jackpot.
+        <div className="animate-curtain fixed inset-0 z-50 flex flex-col overflow-hidden bg-red-deep text-cream">
+          <div className="reveal-ground pointer-events-none absolute inset-0" />
+          <div className="room-grain pointer-events-none absolute inset-0" />
+
+          <div className="relative z-10 flex flex-1 flex-col px-6 pt-10 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+            <p className="wordmark text-center text-xl text-cream">Amourette</p>
+
+            <div className="flex flex-1 flex-col items-center justify-center text-center">
+              {/* Two overlapping portraits: back = you, front = the match. */}
+              <div className="relative mb-9 h-32 w-[13.5rem]">
+                <div
+                  aria-hidden
+                  className="reveal-spark reveal-spark-bloom pointer-events-none absolute -bottom-1.5 left-1/2 h-[9.5rem] w-[13.75rem] -translate-x-1/2 rounded-full"
+                />
+                {/* Back — you: recedes behind. */}
+                <div className="reveal-face-back reveal-portrait-enter absolute left-0 top-0 h-32 w-32 overflow-hidden rounded-full bg-bordeaux">
+                  {me?.photo_url && (
+                    <ProfilePhoto
+                      src={me.photo_url}
+                      name={me.first_name}
+                      className="h-full w-full rounded-full object-cover"
+                      initialClassName="text-4xl"
+                    />
+                  )}
+                  <div
+                    aria-hidden
+                    className="reveal-face-key pointer-events-none absolute inset-0 rounded-full"
+                  />
+                  <div
+                    aria-hidden
+                    className="reveal-face-recede pointer-events-none absolute inset-0 rounded-full"
+                  />
+                </div>
+                {/* Front — the match: fine champagne ring, lifted forward. */}
+                <div className="reveal-face-front reveal-portrait-enter absolute right-0 top-0 z-10 h-32 w-32 overflow-hidden rounded-full bg-bordeaux [animation-delay:80ms]">
+                  <ProfilePhoto
+                    src={newMatch.other.photo_url}
+                    name={newMatch.other.first_name}
+                    className="h-full w-full rounded-full object-cover"
+                    initialClassName="text-4xl"
+                  />
+                  <div
+                    aria-hidden
+                    className="reveal-face-key pointer-events-none absolute inset-0 rounded-full"
+                  />
+                </div>
+              </div>
+
+              <p className="night-kicker text-blush">{s.matchKicker}</p>
+              <h2 className="wordmark mt-4 text-[2.75rem] font-medium italic leading-none text-cream">
+                {s.matchTitle}
+              </h2>
+              <hr className="hairline my-6 w-[60px]" />
+              <p className="max-w-xs text-sm leading-relaxed text-blush">
+                {s.matchBody}
+              </p>
+            </div>
+
+            <div className="grid w-full max-w-xs gap-3 self-center">
+              <Link
+                href={`/chat/${newMatch.id}`}
+                className="night-button w-full bg-cream px-5 py-4 text-center text-red-deep transition-transform active:scale-[0.97]"
+              >
+                {s.openChat}
+              </Link>
+              <button
+                onClick={() => setNewMatch(null)}
+                className="night-button w-full border border-cream/40 px-5 py-4 text-cream transition-transform active:scale-[0.97]"
+              >
+                {s.matchDismiss}
+              </button>
+            </div>
           </div>
         </div>
       )}
