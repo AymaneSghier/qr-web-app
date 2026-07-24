@@ -262,7 +262,7 @@ export function SessionContinuityLab() {
         <p className="font-label text-xs uppercase tracking-[0.18em] text-[#cfb9ad]">Temporary · issue #119</p>
         <h1 className="mt-2 font-display text-4xl italic">Session continuity lab</h1>
         <p className="mt-3 text-sm leading-relaxed text-[#cfb9ad]">
-          Cookie-backed preview B. No secrets or token values are displayed or exported.
+          LocalStorage control preview A. No secrets or token values are displayed or exported.
         </p>
 
         <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
