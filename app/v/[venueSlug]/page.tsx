@@ -20,7 +20,7 @@ import {
   usePreferredLocale,
 } from "@/lib/useLocale";
 import { LanguageSelector } from "@/app/LanguageSelector";
-import { WaitingRoom, type WaitingVariant } from "./WaitingRoom";
+import { WaitingRoom } from "./WaitingRoom";
 import type { Database } from "@/lib/database.types";
 
 // Public-facing profile: only the columns other users are ever allowed to see.
@@ -187,28 +187,6 @@ export default function VenueRoom() {
       typeof window !== "undefined" &&
       window.localStorage.getItem(ROOM_HINT_DISMISS_KEY) !== "1"
   );
-  // Dev preview switch for the waiting-room redesign (#106). `?wr=a|b|c` forces
-  // the empty waiting state and renders that variant, so all three are reviewable
-  // on the branch's Vercel preview even in a crowded room. `?wrcount=` fakes the
-  // live count and `?wrbio=empty|full` previews both bio-CTA states. No param =
-  // the current design; production behaviour is unchanged.
-  const [wrPreview] = useState<{
-    variant: WaitingVariant | null;
-    count: number | null;
-    bio: "empty" | "full" | null;
-  }>(() => {
-    if (typeof window === "undefined")
-      return { variant: null, count: null, bio: null };
-    const q = new URLSearchParams(window.location.search);
-    const v = q.get("wr");
-    const variant = v === "a" || v === "b" || v === "c" ? v : null;
-    const countRaw = q.get("wrcount");
-    const count =
-      countRaw !== null && /^\d+$/.test(countRaw) ? Number(countRaw) : null;
-    const bioRaw = q.get("wrbio");
-    const bio = bioRaw === "empty" || bioRaw === "full" ? bioRaw : null;
-    return { variant, count, bio };
-  });
   const [emailPromptEligible, setEmailPromptEligible] = useState(false);
   const [emailPromptOpen, setEmailPromptOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -1549,61 +1527,17 @@ export default function VenueRoom() {
           </div>
         )}
 
-        {wrPreview.variant ? (
-          /* #106 preview: force one of the redesign variants (dev-only, driven
-             by ?wr=a|b|c). Uses the faked count/bio from the query when present,
-             otherwise the real ones. */
+        {visible.length === 0 ? (
+          /* The wait is a room filling up, not a dead end (#106): a calm reframe,
+             the bio lever, and a browser-notify opt-in. The feed takes over
+             automatically when the first compatible profile arrives. */
           <WaitingRoom
-            variant={wrPreview.variant}
             venueName={venue?.name ?? ""}
-            roomCount={wrPreview.count ?? roomCount}
-            hasBio={wrPreview.bio ? wrPreview.bio === "full" : Boolean(me?.bio)}
+            hasBio={Boolean(me?.bio)}
             polishPath={polishPath}
             onLeave={leave}
-            onNotify={() => setEmailPromptOpen(true)}
             s={s}
           />
-        ) : visible.length === 0 ? (
-          /* The wait is a room filling up, not a dead end: live counter,
-             honest "go enjoy your night" copy, and a profile-polish CTA. The
-             feed takes over automatically when the first profile arrives. */
-          <div className="flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-8">
-            <div className="night-panel w-full max-w-sm p-8 text-center">
-              <p className="night-kicker">{venue?.name ?? ""}</p>
-              {/* You are visibly checked in on this screen, so an honest count
-                  is >= 1. 0 or null means the query failed or RLS filtered it
-                  out — hide the counter rather than show a false empty room. */}
-              {roomCount !== null && roomCount > 0 && (
-                <>
-                  <p className="font-display mt-6 text-6xl font-medium leading-none text-cream">
-                    {roomCount}
-                  </p>
-                  <p className="mt-2 text-sm text-taupe">
-                    {s.roomCount(roomCount)}
-                  </p>
-                </>
-              )}
-              <hr className="hairline mt-6" />
-              <h2 className="font-display mt-6 text-3xl font-medium">
-                {s.waitingTitle}
-              </h2>
-              <p className="night-muted mt-3 leading-relaxed">{s.waitingBody}</p>
-              <div className="mt-7 grid gap-3">
-                <Link
-                  href={polishPath}
-                  className="night-button night-button-secondary px-5 py-3 text-center text-xs"
-                >
-                  {s.polishProfile}
-                </Link>
-                <button
-                  onClick={leave}
-                  className="night-button night-button-secondary px-5 py-3 text-xs"
-                >
-                  {s.leave}
-                </button>
-              </div>
-            </div>
-          </div>
         ) : (
           /* One profile per viewport: recognition, not evaluation. Scrolling
              past someone stores and shows nothing — you can always come back. */
