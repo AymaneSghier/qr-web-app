@@ -1149,14 +1149,20 @@ export default function VenueRoom() {
       .update({ left_at: new Date().toISOString() })
       .eq("profile_id", me.id)
       .is("left_at", null);
+    // Leaving resets the arrival: you disappeared from the room, so coming
+    // back (button or re-scan) should re-cross the threshold, not resume.
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(enteredSessionKey(venueSlug));
+    }
     setStatus("left");
   }
 
   async function rejoin() {
     if (!venue || !me) return;
-    // Coming back is a re-entry, not a first arrival: keep the loading beat
-    // quiet, no doorway ceremony.
-    setShowDoorway(false);
+    // Leaving and coming back is a true re-arrival (not a mere detour), so
+    // replay the doorway and hold it for its readable minimum.
+    const rejoinStartedAt = Date.now();
+    setShowDoorway(true);
     setStatus("loading");
     const { error } = await supabase.rpc("check_in", { p_venue_id: venue.id });
     if (error) {
@@ -1171,6 +1177,13 @@ export default function VenueRoom() {
     ]);
     setCandidates(nextCandidates);
     setRoomCount(count);
+    const remaining = ARRIVAL_MIN_MS - (Date.now() - rejoinStartedAt);
+    if (remaining > 0) {
+      await new Promise((resolve) => setTimeout(resolve, remaining));
+    }
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(enteredSessionKey(venueSlug), "1");
+    }
     setStatus("ready");
   }
 
