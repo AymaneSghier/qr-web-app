@@ -98,30 +98,44 @@ export function Segmented({
 }
 
 // Photo picker: a champagne-ringed circle that previews the chosen file. Size is
-// the only per-context difference (large in the wizard step, smaller inline in
-// the editor). Validation lives in the parent (it owns the error message).
+// a per-context difference (large in the wizard step, smaller inline in the
+// editor). `editable` is the edit-mode affordance: a returning user already has a
+// photo, so a "Change photo" overlay makes clear the image is tappable and
+// replaceable (crop/resize is #31, not here). Validation lives in the parent (it
+// owns the error message).
 export function PhotoPicker({
   previewUrl,
   onChange,
   label,
   size = "lg",
+  editable = false,
+  changeLabel,
 }: {
   previewUrl: string;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   label: string;
   size?: "lg" | "sm";
+  editable?: boolean;
+  changeLabel?: string;
 }) {
   const dimension = size === "lg" ? "h-44 w-44" : "h-28 w-28";
+  const showOverlay = editable && previewUrl !== "";
   return (
     <label className="mx-auto block w-fit cursor-pointer">
       <div
-        className={`night-photo-ring flex ${dimension} items-center justify-center overflow-hidden rounded-full border border-dashed border-champagne/40 bg-bordeaux text-center transition hover:border-blush/60`}
+        className={`night-photo-ring group relative flex ${dimension} items-center justify-center overflow-hidden rounded-full border border-dashed border-champagne/40 bg-bordeaux text-center transition hover:border-blush/60`}
       >
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={previewUrl} alt="" className="h-full w-full object-cover" />
         ) : (
           <span className="px-4 text-sm font-medium text-taupe">{label}</span>
+        )}
+        {showOverlay && (
+          <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-velvet/70 py-1.5 font-label text-[10px] uppercase tracking-wider text-cream backdrop-blur-sm">
+            <PencilIcon />
+            {changeLabel}
+          </span>
         )}
       </div>
       <input
@@ -131,6 +145,24 @@ export function PhotoPicker({
         onChange={onChange}
       />
     </label>
+  );
+}
+
+function PencilIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-3 w-3"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
   );
 }
 
