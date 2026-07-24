@@ -21,6 +21,7 @@ import {
 } from "@/lib/useLocale";
 import { LanguageSelector } from "@/app/LanguageSelector";
 import { WaitingRoom } from "./WaitingRoom";
+import { Modal } from "@/components/ui/modal";
 import type { Database } from "@/lib/database.types";
 
 // Public-facing profile: only the columns other users are ever allowed to see.
@@ -86,6 +87,12 @@ const PRESENCE_REFETCH_THROTTLE_MS = 2_500;
 // While the venue is closed, poll is_live slowly as the realtime fallback.
 const CLOSED_POLL_MS = 30_000;
 const ROOM_HINT_DISMISS_KEY = "paramour-room-hint-dismissed";
+// The entry threshold is an arrival ceremony, not a loading spinner (#103):
+// held for a readable minimum the FIRST time you enter a venue this session,
+// and skipped entirely on re-entry (bouncing back from the profile editor, a
+// re-boot) so it never flashes as an unreadable "stamp".
+const ARRIVAL_MIN_MS = 2200;
+const ENTERED_SESSION_PREFIX = "amourette-entered";
 const EMAIL_PROMPT_ACTIVE_MS = 2 * 60_000;
 const EMAIL_CONSENT_VERSION = "global-live-night-email-v1";
 const EMAIL_PROMPT_DISMISS_PREFIX = "amourette-email-prompt-dismissed";
@@ -93,10 +100,28 @@ const EMAIL_SUBSCRIBED_KEY = "amourette-email-subscribed";
 
 // "closed" = the venue exists but is_live is false: the night has not started,
 // or the founder ended it. The screen reopens itself when the switch flips.
-type Status = "loading" | "ready" | "error" | "left" | "invisible" | "closed";
+type Status =
+  | "loading"
+  | "ready"
+  | "error"
+  | "notfound"
+  | "left"
+  | "invisible"
+  | "closed";
 
 function readMarkerKey(matchId: string) {
   return `paramour-chat-read:${matchId}`;
+}
+
+// Per-tab-session marker that this venue has already been entered, so the
+// arrival ceremony plays once and re-entries stay quiet (#103).
+function enteredSessionKey(slug: string) {
+  return `${ENTERED_SESSION_PREFIX}:${slug}`;
+}
+
+function hasEnteredThisSession(slug: string) {
+  if (typeof window === "undefined") return false;
+  return window.sessionStorage.getItem(enteredSessionKey(slug)) === "1";
 }
 
 function getReadMarker(matchId: string) {
@@ -180,7 +205,17 @@ export default function VenueRoom() {
   const [blockTarget, setBlockTarget] = useState<PublicProfile | null>(null);
   const [blockReason, setBlockReason] = useState<ReportReason>("unsafe_behavior");
   const [blockNote, setBlockNote] = useState("");
+  // Blocking is a one-tap safety action: the reason (a moderation signal) is
+  // folded away behind an optional disclosure, defaulted so the insert stays a
+  // valid signal without asking anything of the user.
+  const [blockReasonOpen, setBlockReasonOpen] = useState(false);
   const [status, setStatus] = useState<Status>("loading");
+  // Whether the loading screen shows the full arrival doorway (first entry) or
+  // stays a quiet ambient beat (re-entry). Seeded from the session marker so the
+  // first paint is already right, then re-decided each bootstrap.
+  const [showDoorway, setShowDoorway] = useState(
+    () => !hasEnteredThisSession(venueSlug)
+  );
   const [errorMsg, setErrorMsg] = useState("");
   const [showRoomHint, setShowRoomHint] = useState(
     () =>
@@ -197,6 +232,10 @@ export default function VenueRoom() {
   const [emailPromptError, setEmailPromptError] = useState("");
   const emailPromptElapsedRef = useRef(0);
   const emailPromptVenueSlugRef = useRef(venueSlug);
+  // Render-safe mirror of the ref above: the render gate can't read a ref's
+  // `.current` during render, so we keep the prompt's venue in state too. It is
+  // set in lockstep with the ref so the stale-venue guard behaves identically.
+  const [emailPromptVenueSlug, setEmailPromptVenueSlug] = useState(venueSlug);
 
   // Locale follows the venue's city once it is known; before that (loading,
   // hard errors) we fall back to the browser language (resolved after mount to
@@ -255,16 +294,8 @@ export default function VenueRoom() {
     roomMenuOpen,
   ]);
 
-  useEffect(() => {
-    if (!emailPromptOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && emailPromptState !== "saving") {
-        dismissEmailPrompt();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  });
+  // Esc-to-dismiss lives in the shared Modal now, gated by its `dismissable`
+  // prop (which we tie to the saving state below).
 
   useEffect(() => {
     if (emailPromptState !== "success") return;
@@ -456,6 +487,13 @@ export default function VenueRoom() {
   useEffect(() => {
     let active = true;
     (async () => {
+      // Arrival vs re-entry: the doorway plays in full (and is held for a
+      // readable minimum) only the first time this session; a re-entry stays a
+      // quiet ambient beat. Measured from mount so the floor covers the whole
+      // bootstrap, not just the tail.
+      const bootStartedAt = Date.now();
+      const isArrival = !hasEnteredThisSession(venueSlug);
+      setShowDoorway(isArrival);
       try {
         const user = await ensureAnonSession();
         if (!active) return;
@@ -480,6 +518,7 @@ export default function VenueRoom() {
         // and dismissal state are specific to the current venue night.
         if (emailPromptVenueSlugRef.current !== venueSlug) {
           emailPromptVenueSlugRef.current = venueSlug;
+          setEmailPromptVenueSlug(venueSlug);
           emailPromptElapsedRef.current = 0;
           setEmailPromptEligible(false);
           setEmailPromptOpen(false);
@@ -497,10 +536,7 @@ export default function VenueRoom() {
         if (venueError) throw venueError;
         if (!active) return;
         if (!venueRow) {
-          setStatus("error");
-          setErrorMsg(
-            t[preferredLocale(browserLocale())].room.venueNotFound
-          );
+          setStatus("notfound");
           return;
         }
         const { error: scanError } = await supabase.rpc("record_venue_scan", {
@@ -598,6 +634,20 @@ export default function VenueRoom() {
         setMatches(matchState.matches);
         setUnreadByMatchId(matchState.unread);
         setMatchedIds(new Set(matchState.matches.map((m) => m.other.id)));
+
+        // Hold the arrival doorway for its readable minimum even if the room
+        // loaded faster, so it reads as a deliberate threshold, never a flash.
+        // Re-entries fall through instantly.
+        if (isArrival) {
+          const remaining = ARRIVAL_MIN_MS - (Date.now() - bootStartedAt);
+          if (remaining > 0) {
+            await new Promise((resolve) => setTimeout(resolve, remaining));
+          }
+          if (!active) return;
+        }
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem(enteredSessionKey(venueSlug), "1");
+        }
         setStatus(isVisible ? "ready" : "invisible");
       } catch (e) {
         console.error(e);
@@ -1010,17 +1060,15 @@ export default function VenueRoom() {
     setBlockTarget(profile);
     setBlockReason("unsafe_behavior");
     setBlockNote("");
+    setBlockReasonOpen(false);
     setErrorMsg("");
   }
 
+  // The modal is itself the confirmation step now (no native window.confirm),
+  // and the reason is optional — a default already sits in blockReason.
   async function submitBlock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!blockTarget) return;
-    if (blockReason === "other" && !blockNote.trim()) {
-      setErrorMsg(s.reportNote);
-      return;
-    }
-    if (!window.confirm(s.blockConfirm(blockTarget.first_name))) return;
     await blockProfile(blockTarget, blockReason, blockNote);
   }
 
@@ -1102,11 +1150,20 @@ export default function VenueRoom() {
       .update({ left_at: new Date().toISOString() })
       .eq("profile_id", me.id)
       .is("left_at", null);
+    // Leaving resets the arrival: you disappeared from the room, so coming
+    // back (button or re-scan) should re-cross the threshold, not resume.
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(enteredSessionKey(venueSlug));
+    }
     setStatus("left");
   }
 
   async function rejoin() {
     if (!venue || !me) return;
+    // Leaving and coming back is a true re-arrival (not a mere detour), so
+    // replay the doorway and hold it for its readable minimum.
+    const rejoinStartedAt = Date.now();
+    setShowDoorway(true);
     setStatus("loading");
     const { error } = await supabase.rpc("check_in", { p_venue_id: venue.id });
     if (error) {
@@ -1121,6 +1178,13 @@ export default function VenueRoom() {
     ]);
     setCandidates(nextCandidates);
     setRoomCount(count);
+    const remaining = ARRIVAL_MIN_MS - (Date.now() - rejoinStartedAt);
+    if (remaining > 0) {
+      await new Promise((resolve) => setTimeout(resolve, remaining));
+    }
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(enteredSessionKey(venueSlug), "1");
+    }
     setStatus("ready");
   }
 
@@ -1166,52 +1230,126 @@ export default function VenueRoom() {
   }
 
   if (status === "loading") {
+    // Re-entry (bouncing back from the profile editor, a re-boot): no arrival
+    // ceremony, just the ambient night for the brief re-boot so nothing flashes
+    // as a "stamp". The doorway is reserved for a real first arrival.
+    if (!showDoorway) {
+      return <main className="night-shell min-h-[100dvh]" aria-busy="true" />;
+    }
+    // Entering = a designed doorway (#103), not a spinner: the check-in RPC
+    // runs while this shows, and the venue name lands mid-bootstrap so the
+    // threshold names the place before it hands off to the feed. The live-dot
+    // beats red because the room really is live. Held for a readable minimum
+    // (ARRIVAL_MIN_MS) so a fast load still reads as a threshold.
     return (
-      <Shell>
-        <div className="mx-auto h-12 w-12 rounded-full border border-champagne/25 bg-bordeaux p-2">
-          <span className="block h-full w-full animate-pulse rounded-full bg-blush" />
-        </div>
-        <p className="mt-5 text-base font-medium text-taupe">
-          {s.entering}
+      <EntryThreshold ember>
+        <p className="wordmark text-lg text-cream">Amourette</p>
+        {venue ? (
+          <>
+            <p className="night-kicker mt-14">{s.enterKicker}</p>
+            <h1 className="font-display mt-3 text-[2.5rem] font-medium leading-[1.03] text-cream">
+              {venue.name}
+            </h1>
+            <hr className="hairline mt-6 w-28" />
+            <p className="night-kicker mt-5 inline-flex items-center gap-2.5">
+              <LiveDot />
+              {venue.city ? `${venue.city} · ${s.enterLiveTag}` : s.enterLiveTag}
+            </p>
+          </>
+        ) : (
+          <span className="mt-14">
+            <LiveDot />
+          </span>
+        )}
+        <p className="night-muted mt-7 max-w-[17rem] leading-relaxed">
+          {venue ? s.enterReassure : s.entering}
         </p>
-      </Shell>
+      </EntryThreshold>
     );
   }
 
   if (status === "error") {
+    // A real technical failure (anonymous sign-in off, etc.) — neutral tone,
+    // no live-dot, no ember: nothing here is live.
     return (
-      <Shell>
-        <p className="text-sm text-blush">{errorMsg}</p>
-      </Shell>
+      <EntryThreshold>
+        <p className="wordmark text-lg text-cream">Amourette</p>
+        <hr className="hairline mt-16 w-28" />
+        <h1 className="font-display mt-6 text-3xl font-medium leading-tight text-cream">
+          {s.errorTitle}
+        </h1>
+        <hr className="hairline mt-6 w-28" />
+        <p className="night-muted mt-6 max-w-[17rem] leading-relaxed">
+          {s.loadError}
+        </p>
+      </EntryThreshold>
+    );
+  }
+
+  if (status === "notfound") {
+    // The slug matches no venue. Same threshold language, neutral tone, and a
+    // nudge back to the real entry point (the QR at the door).
+    return (
+      <EntryThreshold>
+        <p className="wordmark text-lg text-cream">Amourette</p>
+        <hr className="hairline mt-16 w-28" />
+        <h1 className="font-display mt-6 text-3xl font-medium leading-tight text-cream">
+          {s.notFoundTitle}
+        </h1>
+        <hr className="hairline mt-6 w-28" />
+        <p className="night-muted mt-6 max-w-[17rem] leading-relaxed">
+          {s.venueNotFound}
+        </p>
+      </EntryThreshold>
     );
   }
 
   if (status === "closed") {
     // The venue is real but the night is not on. This screen reopens itself:
-    // the venues watcher re-runs the bootstrap when is_live flips.
+    // the venues watcher re-runs the bootstrap when is_live flips. Dormant
+    // (taupe) dot — nothing is live yet.
     return (
-      <Shell>
-        <p className="night-kicker">{venue?.name ?? ""}</p>
-        <h2 className="font-display mt-4 text-2xl font-medium">
+      <EntryThreshold ember>
+        <p className="wordmark text-lg text-cream">Amourette</p>
+        <p className="night-kicker mt-14 inline-flex items-center gap-2.5">
+          <LiveDot dormant />
+          {venue?.city ? `${venue.name} · ${venue.city}` : venue?.name ?? ""}
+        </p>
+        <h1 className="font-display mt-4 text-3xl font-medium leading-tight text-cream">
           {s.closedTitle}
-        </h2>
-        <p className="night-muted mt-3 leading-relaxed">{s.closedBody}</p>
-      </Shell>
+        </h1>
+        <hr className="hairline mt-6 w-28" />
+        <p className="night-muted mt-6 max-w-[18rem] leading-relaxed">
+          {s.closedBody}
+        </p>
+      </EntryThreshold>
     );
   }
 
   if (status === "left") {
+    // You stepped out yourself: no longer visible. The one entry state with a
+    // red CTA — coming back is the action.
     return (
-      <Shell>
-        <h2 className="font-display text-2xl font-medium">{s.leftTitle}</h2>
-        <p className="night-muted mt-3">{s.leftBody}</p>
+      <EntryThreshold ember>
+        <p className="wordmark text-lg text-cream">Amourette</p>
+        <p className="night-kicker mt-14 inline-flex items-center gap-2.5">
+          <LiveDot dormant />
+          {venue?.city ? `${venue.name} · ${venue.city}` : venue?.name ?? ""}
+        </p>
+        <h1 className="font-display mt-4 text-3xl font-medium leading-tight text-cream">
+          {s.leftTitle}
+        </h1>
+        <hr className="hairline mt-6 w-28" />
+        <p className="night-muted mt-6 max-w-[17rem] leading-relaxed">
+          {s.leftBody}
+        </p>
         <button
           onClick={rejoin}
-          className="night-button night-button-primary mt-8 w-full px-5 py-4"
+          className="night-button night-button-primary mt-8 w-full max-w-xs px-5 py-4"
         >
           {s.rejoin}
         </button>
-      </Shell>
+      </EntryThreshold>
     );
   }
 
@@ -1582,28 +1720,36 @@ export default function VenueRoom() {
           </div>
         )}
 
-        {/* One-time hint: a slim dismissible banner, placed below the floating
-            chrome header so it never overlaps the brand/venue/live line. */}
-        {showRoomHint && visible.length > 0 && (
-          <div className="night-panel absolute inset-x-4 top-[120px] z-10 flex items-center justify-between gap-3 p-4">
-            <div>
-              <p className="text-sm font-medium text-cream">
-                {s.firstTimeHintTitle}
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-taupe">
-                {s.firstTimeHintBody}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={dismissRoomHint}
-              className="night-button night-button-secondary shrink-0 px-3 py-2 text-xs"
-            >
-              {s.firstTimeHintDismiss}
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* First-entry primer: a one-time modal (localStorage-gated) that lands
+          right after the arrival ceremony to spell out the discreet double
+          opt-in before anyone taps. Shown only once there is a room to explain. */}
+      {showRoomHint && visible.length > 0 && (
+        <Modal
+          onClose={dismissRoomHint}
+          showClose={false}
+          labelledById="room-hint-title"
+        >
+          <p className="wordmark text-lg text-cream">Amourette</p>
+          <h2
+            id="room-hint-title"
+            className="font-display mt-4 text-3xl font-medium text-cream"
+          >
+            {s.firstTimeHintTitle}
+          </h2>
+          <p className="mt-3 leading-relaxed text-taupe">
+            {s.firstTimeHintBody}
+          </p>
+          <button
+            type="button"
+            onClick={dismissRoomHint}
+            className="night-button mt-6 w-full bg-cream px-5 py-3 text-ink"
+          >
+            {s.firstTimeHintDismiss}
+          </button>
+        </Modal>
+      )}
 
       {newMatch && (
         // Hero #2 — the match reveal. One of the only two full-red screens
@@ -1688,38 +1834,17 @@ export default function VenueRoom() {
       )}
 
       {emailPromptOpen &&
-        emailPromptVenueSlugRef.current === venueSlug &&
+        emailPromptVenueSlug === venueSlug &&
         !newMatch &&
         !reportTarget &&
         !blockTarget && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="email-prompt-title"
-          className="fixed inset-0 z-40 flex items-center justify-center bg-velvet/85 px-6"
-          onMouseDown={(event) => {
-            if (
-              event.target === event.currentTarget &&
-              emailPromptState !== "saving"
-            ) {
-              dismissEmailPrompt();
-            }
-          }}
+        <Modal
+          onClose={dismissEmailPrompt}
+          dismissable={emailPromptState !== "saving"}
+          closeLabel={s.emailPromptClose}
+          labelledById="email-prompt-title"
         >
-          <form
-            onSubmit={submitEmailPrompt}
-            className="night-panel relative w-full max-w-sm rounded-[2rem] p-6"
-          >
-            {emailPromptState !== "saving" && (
-              <button
-                type="button"
-                aria-label={s.emailPromptClose}
-                onClick={dismissEmailPrompt}
-                className="night-button night-button-secondary absolute right-4 top-4 h-9 w-9 p-0 text-lg"
-              >
-                ×
-              </button>
-            )}
+          <form onSubmit={submitEmailPrompt}>
             <p className="wordmark text-lg text-cream">Amourette</p>
             <h2
               id="email-prompt-title"
@@ -1786,21 +1911,29 @@ export default function VenueRoom() {
               </>
             )}
           </form>
-        </div>
+        </Modal>
       )}
 
       {reportTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-velvet/85 px-6">
-          <form
-            onSubmit={submitReport}
-            className="night-panel w-full max-w-sm rounded-[2rem] p-6"
-          >
-            <h2 className="font-display text-2xl font-medium">
+        <Modal
+          onClose={() => setReportTarget(null)}
+          showClose={false}
+          overlayClassName="z-50"
+          labelledById="report-title"
+        >
+          <form onSubmit={submitReport}>
+            <p className="night-kicker text-[10px]">{s.report}</p>
+            <h2
+              id="report-title"
+              className="font-display mt-3 text-2xl font-medium text-cream"
+            >
               {s.reportTitle(reportTarget.first_name)}
             </h2>
             {reportSubmitted ? (
               <>
-                <p className="mt-4 text-taupe">{s.reportSuccess}</p>
+                <p className="mt-4 text-taupe" aria-live="polite">
+                  {s.reportSuccess}
+                </p>
                 <p className="mt-2 text-sm text-taupe">
                   {s.reportBlockPrompt}
                 </p>
@@ -1870,44 +2003,65 @@ export default function VenueRoom() {
               </>
             )}
           </form>
-        </div>
+        </Modal>
       )}
 
       {blockTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-velvet/85 px-6">
-          <form
-            onSubmit={submitBlock}
-            className="night-panel w-full max-w-sm rounded-[2rem] p-6"
-          >
-            <h2 className="font-display text-2xl font-medium">
+        <Modal
+          onClose={() => setBlockTarget(null)}
+          showClose={false}
+          overlayClassName="z-50"
+          labelledById="block-title"
+        >
+          <form onSubmit={submitBlock}>
+            <p className="night-kicker text-[10px]">{s.block}</p>
+            <h2
+              id="block-title"
+              className="font-display mt-3 text-2xl font-medium text-cream"
+            >
               {s.blockTitle(blockTarget.first_name)}
             </h2>
-            <label className="mt-5 block text-sm font-medium text-taupe">
-              {s.reportReason}
-              <select
-                value={blockReason}
-                onChange={(event) =>
-                  setBlockReason(event.target.value as ReportReason)
-                }
-                className="night-input mt-2 px-4 py-3"
+            <p className="mt-3 leading-relaxed text-taupe">{s.blockBody}</p>
+
+            {/* The reason is a moderation signal, not a gate: folded away by
+                default (a valid default already sits in blockReason) and only
+                revealed if the user wants to say why. */}
+            {blockReasonOpen ? (
+              <>
+                <label className="mt-5 block text-sm font-medium text-taupe">
+                  {s.reportReason}
+                  <select
+                    value={blockReason}
+                    onChange={(event) =>
+                      setBlockReason(event.target.value as ReportReason)
+                    }
+                    className="night-input mt-2 px-4 py-3"
+                  >
+                    {REPORT_REASONS.map((reason) => (
+                      <option key={reason} value={reason}>
+                        {s.reportReasons[reason]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <textarea
+                  value={blockNote}
+                  onChange={(event) => setBlockNote(event.target.value)}
+                  maxLength={500}
+                  placeholder={s.reportNote}
+                  className="night-input mt-4 h-28 resize-none px-4 py-3"
+                />
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setBlockReasonOpen(true)}
+                className="mt-4 text-sm text-taupe underline underline-offset-4 transition-colors hover:text-cream"
               >
-                {REPORT_REASONS.map((reason) => (
-                  <option key={reason} value={reason}>
-                    {s.reportReasons[reason]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <textarea
-              value={blockNote}
-              onChange={(event) => setBlockNote(event.target.value)}
-              maxLength={500}
-              required={blockReason === "other"}
-              placeholder={
-                blockReason === "other" ? `${s.reportNote} · required` : s.reportNote
-              }
-              className="night-input mt-4 h-28 resize-none px-4 py-3"
-            />
+                {s.blockReasonOptional}
+              </button>
+            )}
+
             {errorMsg && <p className="mt-3 text-sm text-blush">{errorMsg}</p>}
             <div className="mt-6 grid gap-3">
               <button
@@ -1925,7 +2079,7 @@ export default function VenueRoom() {
               </button>
             </div>
           </form>
-        </div>
+        </Modal>
       )}
     </main>
   );
@@ -2168,16 +2322,37 @@ function ProfileActions({
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+// The entry threshold (#103): the full-bleed night as a doorway, shared by
+// every pre-feed state (loading, closed, left, error, not-found). The venue is
+// the hero on a warm ember; the calm centred column fades in (curtain), then
+// hands off to the live feed. Each state composes its own inner content.
+function EntryThreshold({
+  ember = false,
+  children,
+}: {
+  ember?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <main className="night-shell flex min-h-screen items-center justify-center px-6 text-cream">
+    <main className="night-shell flex min-h-[100dvh] flex-col items-center justify-center px-8 py-12 text-cream">
       <div className="fixed right-5 top-5 z-20">
         <LanguageSelector />
       </div>
-      <div className="night-content night-panel w-full max-w-md rounded-[2rem] p-8 text-center">
-        <p className="wordmark text-xl text-cream">Amourette</p>
-        <div className="mt-6">{children}</div>
+      {ember && <div className="entry-ember" aria-hidden />}
+      <div className="night-content animate-curtain flex w-full max-w-sm flex-col items-center text-center">
+        {children}
       </div>
     </main>
+  );
+}
+
+// The live signal at the threshold: a red seed with a slow single ping when the
+// room is live; a dormant taupe breath when nothing is (closed / after leaving).
+function LiveDot({ dormant = false }: { dormant?: boolean }) {
+  return (
+    <span className={`entry-live${dormant ? " is-dormant" : ""}`} aria-hidden>
+      <span className="entry-live-ring" />
+      <span className="entry-live-seed" />
+    </span>
   );
 }

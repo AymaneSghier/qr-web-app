@@ -74,6 +74,14 @@ type Dict = {
     editSubtitle: string;
     saveChanges: string;
     back: string;
+    // Section heading for the identity group in the editor (photo, name, bio,
+    // gender). The preference group reuses `iWantToMeet`.
+    youSection: string;
+    // Unsaved-changes guard when leaving the editor with pending edits.
+    discardTitle: string;
+    discardBody: string;
+    discardConfirm: string;
+    discardKeep: string;
     tonightAt: (venue: string) => string;
     ageTitle: string;
     ageSubtitle: string;
@@ -122,7 +130,18 @@ type Dict = {
   genders: { woman: string; man: string; nonbinary: string };
   room: {
     entering: string;
+    // Entry threshold (#103): the loading state as a designed doorway. Kicker
+    // above the venue name, the tag beside the live-dot, and the discreet-like
+    // reassurance (the north star: no public rejection, ever).
+    enterKicker: string;
+    enterLiveTag: string;
+    enterReassure: string;
+    // Generic technical failure (anonymous sign-in off, etc.); loadError is the
+    // body under this title.
+    errorTitle: string;
     loadError: string;
+    // The slug matches no venue: notFoundTitle over venueNotFound (the body).
+    notFoundTitle: string;
     venueNotFound: string;
     // The venue exists but is_live is false: the night has not started (or is
     // over). The page reopens itself via realtime when the founder goes live.
@@ -201,7 +220,11 @@ type Dict = {
     openConversation: (name: string) => string;
     block: string;
     blockTitle: (name: string) => string;
+    blockBody: string;
+    blockReasonOptional: string;
     blockSubmit: string;
+    // Native confirm still used by the chat block flow (out of the room-popup
+    // redesign scope). The room block popup uses blockBody in-modal instead.
     blockConfirm: (name: string) => string;
     blockError: string;
     report: string;
@@ -277,6 +300,11 @@ export const t: Record<Locale, Dict> = {
       editSubtitle: "Update your photo, name, bio, or who you want to meet.",
       saveChanges: "Save changes",
       back: "Back",
+      youSection: "You",
+      discardTitle: "Discard changes?",
+      discardBody: "Your edits haven't been saved yet.",
+      discardConfirm: "Discard",
+      discardKeep: "Keep editing",
       tonightAt: (venue) => `Tonight at ${venue}`,
       ageTitle: "Confirm your age",
       ageSubtitle: "Good energy only. Amourette is for adults.",
@@ -323,8 +351,14 @@ export const t: Record<Locale, Dict> = {
     genders: { woman: "Woman", man: "Man", nonbinary: "Non-binary" },
     room: {
       entering: "Walking into the room…",
+      enterKicker: "You're walking into",
+      enterLiveTag: "live tonight",
+      enterReassure:
+        "No one will know who you like, unless it's mutual.",
+      errorTitle: "That didn't work",
       loadError: "Couldn't load the room. Anonymous sign-in may be disabled.",
-      venueNotFound: "This venue doesn't exist.",
+      notFoundTitle: "This link leads nowhere",
+      venueNotFound: "This room doesn't exist. Scan the QR at the bar's door.",
       closedTitle: "The night hasn't started yet",
       closedBody:
         "This bar isn't live on Amourette right now. Come back when the night kicks off — this page will open on its own.",
@@ -335,7 +369,7 @@ export const t: Record<Locale, Dict> = {
       editProfile: "Edit my profile",
       firstTimeHintTitle: "Tap quietly",
       firstTimeHintBody:
-        "They only know if it is mutual. You stay in control of your attention.",
+        "No one is ever told they were tapped. A chat opens only if you both tap — so you stay in control of your attention.",
       firstTimeHintDismiss: "Got it",
       emailPromptTitle: "Do it again soon?",
       emailPromptBody:
@@ -400,7 +434,10 @@ export const t: Record<Locale, Dict> = {
       conversationHint: "Mutual taps live here. Keep it warm, then say hi.",
       openConversation: (name) => `Open conversation with ${name}`,
       block: "Block",
-      blockTitle: (name) => `Block ${name}`,
+      blockTitle: (name) => `Block ${name}?`,
+      blockBody:
+        "You will no longer see each other, and any match or chat between you will close. They are never told.",
+      blockReasonOptional: "Add a reason (optional)",
       blockSubmit: "Block this person",
       blockConfirm: (name) =>
         `Block ${name}? You will no longer see each other, and any match or chat will close.`,
@@ -471,6 +508,11 @@ export const t: Record<Locale, Dict> = {
       editSubtitle: "Mets à jour ta photo, ton prénom, ta bio ou qui tu veux rencontrer.",
       saveChanges: "Enregistrer les modifications",
       back: "Retour",
+      youSection: "Toi",
+      discardTitle: "Abandonner les modifications ?",
+      discardBody: "Tes changements n'ont pas encore été enregistrés.",
+      discardConfirm: "Abandonner",
+      discardKeep: "Continuer les modifications",
       tonightAt: (venue) => `Ce soir à ${venue}`,
       ageTitle: "Confirme ton âge",
       ageSubtitle: "Bonne énergie seulement. Amourette est réservé aux adultes.",
@@ -521,9 +563,16 @@ export const t: Record<Locale, Dict> = {
     genders: { woman: "Femme", man: "Homme", nonbinary: "Non-binaire" },
     room: {
       entering: "On entre dans la salle…",
+      enterKicker: "Tu entres chez",
+      enterLiveTag: "en salle ce soir",
+      enterReassure:
+        "Personne ne saura qui tu likes, sauf si c'est réciproque.",
+      errorTitle: "Ça n'a pas marché",
       loadError:
         "Impossible de charger la salle. La connexion anonyme est peut-être désactivée.",
-      venueNotFound: "Ce lieu n'existe pas.",
+      notFoundTitle: "Ce lien ne mène nulle part",
+      venueNotFound:
+        "Cette salle n'existe pas. Scanne le QR à l'entrée du bar.",
       closedTitle: "La soirée n'a pas encore commencé",
       closedBody:
         "Ce bar n'est pas encore ouvert sur Amourette ce soir. Reviens quand la soirée se lance — cette page s'ouvrira toute seule.",
@@ -534,7 +583,7 @@ export const t: Record<Locale, Dict> = {
       editProfile: "Modifier mon profil",
       firstTimeHintTitle: "Craque discrètement",
       firstTimeHintBody:
-        "La personne ne le sait que si c'est mutuel. Tu gardes le contrôle de ton attention.",
+        "Personne n'est jamais prévenu qu'on a craqué pour lui. Un chat s'ouvre seulement si vous craquez tous les deux — tu gardes le contrôle de ton attention.",
       firstTimeHintDismiss: "Compris",
       emailPromptTitle: "On remet ça bientôt ?",
       emailPromptBody:
@@ -600,7 +649,10 @@ export const t: Record<Locale, Dict> = {
         "Les coups de cœur mutuels vivent ici. Reste chaleureux, puis va dire bonjour.",
       openConversation: (name) => `Ouvrir la conversation avec ${name}`,
       block: "Bloquer",
-      blockTitle: (name) => `Bloquer ${name}`,
+      blockTitle: (name) => `Bloquer ${name} ?`,
+      blockBody:
+        "Vous ne vous verrez plus, et tout match ou chat entre vous sera fermé. La personne n'en est jamais informée.",
+      blockReasonOptional: "Ajouter une raison (optionnel)",
       blockSubmit: "Bloquer cette personne",
       blockConfirm: (name) =>
         `Bloquer ${name} ? Vous ne vous verrez plus, et tout match ou chat sera fermé.`,
@@ -671,6 +723,11 @@ export const t: Record<Locale, Dict> = {
       editSubtitle: "Actualiza tu foto, tu nombre, tu bio o a quién quieres conocer.",
       saveChanges: "Guardar cambios",
       back: "Volver",
+      youSection: "Tú",
+      discardTitle: "¿Descartar los cambios?",
+      discardBody: "Tus cambios aún no se han guardado.",
+      discardConfirm: "Descartar",
+      discardKeep: "Seguir editando",
       tonightAt: (venue) => `Esta noche en ${venue}`,
       ageTitle: "Confirma tu edad",
       ageSubtitle: "Solo buena energía. Amourette es para adultos.",
@@ -717,9 +774,16 @@ export const t: Record<Locale, Dict> = {
     genders: { woman: "Mujer", man: "Hombre", nonbinary: "No binario" },
     room: {
       entering: "Entrando en la sala…",
+      enterKicker: "Estás entrando en",
+      enterLiveTag: "en la sala esta noche",
+      enterReassure:
+        "Nadie sabrá a quién marcas, salvo si es recíproco.",
+      errorTitle: "No funcionó",
       loadError:
         "No se pudo cargar la sala. Puede que el inicio anónimo esté desactivado.",
-      venueNotFound: "Este lugar no existe.",
+      notFoundTitle: "Este enlace no lleva a ninguna parte",
+      venueNotFound:
+        "Esta sala no existe. Escanea el QR en la puerta del bar.",
       closedTitle: "La noche aún no ha empezado",
       closedBody:
         "Este bar todavía no está abierto en Amourette esta noche. Vuelve cuando arranque la noche — esta página se abrirá sola.",
@@ -730,7 +794,7 @@ export const t: Record<Locale, Dict> = {
       editProfile: "Editar mi perfil",
       firstTimeHintTitle: "Flecha con discreción",
       firstTimeHintBody:
-        "Solo lo sabrán si es mutuo. Tú controlas tu atención.",
+        "A nadie se le avisa de que le has flechado. Un chat se abre solo si os flecháis los dos — tú controlas tu atención.",
       firstTimeHintDismiss: "Entendido",
       emailPromptTitle: "¿Repetimos pronto?",
       emailPromptBody:
@@ -796,7 +860,10 @@ export const t: Record<Locale, Dict> = {
         "Los flechazos mutuos viven aquí. Manténlo cálido y luego ve a saludar.",
       openConversation: (name) => `Abrir conversación con ${name}`,
       block: "Bloquear",
-      blockTitle: (name) => `Bloquear a ${name}`,
+      blockTitle: (name) => `¿Bloquear a ${name}?`,
+      blockBody:
+        "Ya no se verán, y cualquier match o chat entre vosotros se cerrará. La persona nunca lo sabrá.",
+      blockReasonOptional: "Añadir un motivo (opcional)",
       blockSubmit: "Bloquear a esta persona",
       blockConfirm: (name) =>
         `¿Bloquear a ${name}? Ya no se verán, y cualquier match o chat se cerrará.`,
